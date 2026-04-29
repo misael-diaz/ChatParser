@@ -37,7 +37,7 @@ the builder as well, for I rather have a complete understanding of every aspect 
   queries.
 
 #### Considerations
-- Use simple conditionals to map the accencted characters and take into account that the Latin characters
+- Use simple conditionals to map the accented characters and take into account that the Latin characters
   that we care about are mostly in sequence so a range-base check reduces the amount of comparisons.
 - Maybe you want to store the chat messages in lowercase also so that we don't end up with mixed case
   words even if they are present in the original messages.
