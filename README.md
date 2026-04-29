@@ -8,7 +8,7 @@ I am crafting this tool for my own business. The general idea is to use this too
 
 So this tool requires me to export the chats with my clients in plain text one by one. I don't have a problem with that. Running a business in solo mode means being organized, disciplined, and strategic.
 
-All I am going to say is that if you know the tech you can develop your own tool according to your needs, no need to wait for the needed future to be released by Meta. And I am not using AI to generate the code for this tool; instead I am using it to discuss edge cases. This means that I am the systems architect and the builder as well, for I rather have a complete understanding of every aspect of my own tools.
+All I am going to say is that if you know the tech you can develop your own tool according to your needs, no need to wait for the sought after feature to be released by Meta. And I am not using AI to generate the code for this tool; instead I am using it to discuss edge cases and to close knowledge-gaps that I may have (not without doing the research myself for verification). This means that I am the systems architect and the builder as well of this tool. I rather have a complete understanding of the tools that my business depends on.
 
 ## Development Status
 
