@@ -83,7 +83,12 @@ int main()
 	/* excludes emojis and other non-ASCII characters from the chat */
 	while (len_chat > count) {
 		if (0x80u > (*txt)) {
-			fprintf(stdout, "%c", *txt);
+			if (((*txt) >= 0x41u) && ((*txt) < 0x5au)) {
+				fprintf(stdout, "%c", (((*txt) - 0x41u) + 0x61u));
+			}
+			else {
+				fprintf(stdout, "%c", *txt);
+			}
 			txt += 1;
 			count += 1;
 		}
