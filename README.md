@@ -8,7 +8,8 @@ I am crafting this tool for my own business. The general idea is to use this too
 conversations with my clients (with their consent of course) in a database for storage and analytics.
 My intention is to query WhatsApp chats from the command-line instead of using the WhatsApp limited builtin
 search feature. Anyone who tries to run a business on their own with WhatsApp's basic tier understands its
-limitations.
+limitations. Another strong reason for ingesting the chats into SQL is that this allows me to index them
+(fast search) and structure the data to find trends hidden in the data to tailor my business.
 
 So this tool requires me to export the chats with my clients in plain text one by one. I don't have a
 problem with that. Running a business in solo mode means being organized, disciplined, and strategic.
