@@ -21,6 +21,18 @@ the builder as well, for I rather have a complete understanding of every aspect 
 ## Development Status
 
 ### Day 1
+The drive of the first day is to experiment with the idea: Can I parse [Unicode](https://www.w3schools.com/charsets/ref_html_utf8.asp) encoded text file without using a library?
+
+Why bother at all? First reason, most web pages use Unicode encoding and this makes sense because of internationalization. People around the world want to interact with content in their native language. The web we know today would not exist without it. So the first reason is to have a better idea of an encoding that we take for granted; but it is one of the most important achievements for the web world. The other reason is that this would be a great opportunity for me to learn how to deal with Unicode at a low level.
+
+Is it not this project about developing a performant application for my business? Yes indeed but if there is something that I can learn from the act of writing the code myself, then that is worth my time. Because this is an experience that I can take with me to the next project. The business applications of today rely on layers upon layers of code, my application is just one level above the GNU/Linux platform; meaning that it is closer to the metal and so it will outperform most existing business applications (especially vibe coded applications) that address this problem.
+
+### Lessons
+This section is devoted to mentioning the important lessons that were derived from experimenting with my code. I used GDB to inspect the stream of bytes and also the `xxd` command-line tool to look at the contents in hex.
+
+- Parsing Unicode is not like parsing a stream of bytes as in ASCII. However knowing ASCII codes helps understand how to downsize Unicode encoded data to ASCII. The general idea is that all characters but ASCII characters are preceeded by a prefix byte that indicates I belong to this table (in a loose sense).  For example the hex prefix code for [Latin Extended A](https://www.w3schools.com/charsets/ref_utf_latin_extended_a.asp) characters is `0xC3`. The first character that belongs to that table is `À` and two bytes are needed to encode it, `0xC3` and `0x80`. A similar pattern can be seen for [Latin Extended B](https://www.w3schools.com/charsets/ref_utf_latin_extended_b.asp) characters, the first character in that table is `ƀ`, and it also requires two bytes to encode it, `0xC6` and `0x80`.
+
+- It is easy to differentiate Latin Extended A and B characters from ASCII for two reasons. The first reason is the absense of the prefix byte and the second is that ASCII characters must be the asymmetric range `0x00` to `0x80`, meaning that the end value is not inclusive, for only 7-bits of the 8-bits in a byte are needed to represent ASCII. If you go back to the first characters of Latin Extended A and B you will see that `0x80` follows the prefix byte. This is clever because there's no way for a parser that treats bytes as belonging to ASCII characters would print ASCII characters; instead nothing would be shown. This realization also tells me that after downsizing the stream of encoded Unicode characters to ASCII no byte should be greater than or equal to `0x80`. And that is great way to validate the conversion.
 
 ### Achievements
 - Gets the file status of the chat for getting the modification file timestamp
