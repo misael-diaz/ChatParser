@@ -59,3 +59,32 @@ du -b file.txt
 Then you can concat the original chat file to obtain a UTF-8 file with BOM to test that the code does not break if there's a BOM.
 
 We were able to parse and print an entire WhatsApp chat consisting of just ASCII characters.
+
+### Day 2
+The objective of the day was to transform the Unicode text to ASCII lowercase while mapping the common
+accented characters to their ASCII counterparts. The reason for storing the chats in lowercase is that
+it simplifies the querying code (because all the text has the same case).
+
+
+#### Lessons Learned
+Unintended unaligned access in commit [1f792ba](https://github.com/misael-diaz/ChatParser/blob/1f792ba653cda313e52e90a843b1addb2fa8339f/main.c#L100) can happen because of the direct casting. The solution to this problem was to construct the 16-bit integer with bitwise operations `uint16_t const value = ((txt[1] << 8) | txt[0]);`. The referenced memory in text is also unsigned so the resulting code is not going to set bits. And this is important because we want the tool to handle these efficiently. This issue was pointed out to me by AI and I verified that the optimized binary (after modification) used a fast instruction for loading the 16-bit integer to memory `movzwl  (%rbx), %eax`; the instruction is a zero-extended meaning that the 16-bit pattern is moved to a 32-bit register the hi 16-bits set to zero which is what we want. We can get away with the casting at the beginning of the pointer returned by `mmap` because it is going to be paged aligned, no need to construct values with bitwise operations.
+
+
+#### Achievements
+- Maps Latin Extended characters to their ASCII lowercase counterparts.
+- The mapped characters comprise the most used accented characters used in Spanish.
+- These are two-byte characters, this is why we cast them to 16-bit integers with confidence.
+- We use unsigned integer casting because the raw data is interpreted as unsigned as well, this matters when extending from 16-bit to 32-bit in the code that compares the encoding.
+- Even though we are hardcoding the Unicode encoding in hex the code is still readable because the next dev would see the mapping clearly.
+- Considerations from the previous day were all addressed.
+
+
+#### Considerations
+- You may want to copy the modified data to a new buffer.
+- Verify that the buffer contains ASCII characters.
+- Check for embedded null characters in the new buffer (none expected) except at the end of the chat because we would use an anonymous mapping in this case (zero initialized by the Linux Kernel for us).
+- You may want to convert ASCII in the asymmetric range [0, 32) to whitespace (decimal 32) and also you may have to either complain if you find decimal 127 in the resulting text or convert it to zero.
+
+
+#### Testing
+I was able to read WhatsApp chats, the output met the expectations: lowercase and plain ASCII text.
