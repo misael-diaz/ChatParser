@@ -97,6 +97,39 @@ int main()
 			_exit(1);
 		}
 		else if (0xe0u > (*txt)) {
+			if (((*((uint16_t*) txt)) >= 0x80c3u) && ((*((uint16_t*) txt)) < 0x86c3u)) {
+				fprintf(stdout, "%c", 'a');
+			}
+			else if (((*((uint16_t*) txt)) >= 0x88c3u) && ((*((uint16_t*) txt)) < 0x8cc3u)) {
+				fprintf(stdout, "%c", 'e');
+			}
+			else if (((*((uint16_t*) txt)) >= 0x8cc3u) && ((*((uint16_t*) txt)) < 0x90c3u)) {
+				fprintf(stdout, "%c", 'i');
+			}
+			else if (((*((uint16_t*) txt)) >= 0x92c3u) && ((*((uint16_t*) txt)) < 0x97c3u)) {
+				fprintf(stdout, "%c", 'o');
+			}
+			else if (((*((uint16_t*) txt)) >= 0x99c3u) && ((*((uint16_t*) txt)) < 0x9ec3u)) {
+				fprintf(stdout, "%c", 'u');
+			}
+			else if (((*((uint16_t*) txt)) >= 0xa0c3u) && ((*((uint16_t*) txt)) < 0xa6c3u)) {
+				fprintf(stdout, "%c", 'a');
+			}
+			else if (((*((uint16_t*) txt)) >= 0xa8c3u) && ((*((uint16_t*) txt)) < 0xacc3u)) {
+				fprintf(stdout, "%c", 'e');
+			}
+			else if (((*((uint16_t*) txt)) >= 0xacc3u) && ((*((uint16_t*) txt)) < 0xb0c3u)) {
+				fprintf(stdout, "%c", 'i');
+			}
+			else if (((*((uint16_t*) txt)) == 0xb1c3u)) {
+				fprintf(stdout, "%c", 'n');
+			}
+			else if (((*((uint16_t*) txt)) >= 0xb2c3u) && ((*((uint16_t*) txt)) < 0xb7c3u)) {
+				fprintf(stdout, "%c", 'o');
+			}
+			else if (((*((uint16_t*) txt)) >= 0xb9c3u) && ((*((uint16_t*) txt)) < 0xbdc3u)) {
+				fprintf(stdout, "%c", 'u');
+			}
 			txt += 2;
 			count += 2;
 		}
