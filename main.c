@@ -1,7 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <endian.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -9,8 +8,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
-
-_Static_assert(BYTE_ORDER == LITTLE_ENDIAN);
 
 #define BOM_UTF8 0x00bfbbefu
 
@@ -72,11 +69,18 @@ int main()
 
 	uint64_t count = 0;
 	char unsigned *txt = bufchat;
-	if (BOM_UTF8 == ((*((uint32_t*) txt)) & 0x00ffffff)) {
+	uint32_t const head_utf8 = 0x00ffffff & (
+		(txt[3] << 24) |
+		(txt[2] << 16) |
+		(txt[1] <<  8) |
+		(txt[0] <<  0)
+	);
+	uint16_t const head_utf16 = ((txt[1] << 8) | txt[0]);
+	if (BOM_UTF8 == head_utf8) {
 		txt += 3;
 		count += 3;
 	}
-	else if ((0xfffeu == (*((uint16_t*) txt))) || (0xfeffu == (*((uint16_t*) txt)))) {
+	else if ((0xfffeu == head_utf16) || (0xfeffu == head_utf16)) {
 		fprintf(stderr, "%s", "error: unsupported utf-16\n");
 		_exit(1);
 	}
