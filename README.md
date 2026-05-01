@@ -96,9 +96,12 @@ Commit the transliterated Unicode into ASCII to a destination memory buffer and 
 #### Lessons Learned
 - **Portability**: The main source file at commit [60b7a0c](https://github.com/misael-diaz/ChatParser/commit/60b7a0c037ed654bccc4624d1929ccebd28711d1) has an static assert that checks if the CPU architecture is LE, if that is not the case the compilation is aborted. This check of course makes the code non-portable to BE CPUs. The reason for adding that check was due to few lines of code where we cast the chat data to a 16-bit or 32-bit integer. By instead assembling the data in the expected order with bitwise operations we obtain the same result but the compiler is smart enough to assemble the integer in a single `mov` instruction when optimizations are enabled (for example, when compiling with `-O2`). Therefore by assembling the integers instead of casting we were able to remove the static assert (because it is no longer needed) and as result of that the code is now portable; it may be compiled in both LE and BE CPUs and the output should be the same. The current version of the code does not have the CPU architecture assertion (portable). By caring about the details we fulfill our commitment to leverage the HPC precision to develop performant tools.
 
+#### Achievements
+Extended the code to efficiently (sequential access) write chat messages to an anonymous memory map.
+
 #### Considerations
 - **Normalization**: get rid of control sequences from the ASCII so that it won't interfere with a web-based dashboard later down the road.
 - **Performance**: Do the transliteration, normalization, and validation, on the same loop for performance. Running these on separate loops does not improve but detriment performance because it is probably evicted from the CPU cache. Profiling should confirm this in the end.
 
 #### Testing
-No exciting tests to report, essentially the chat message looks as expected without emojis and without Latin accented characters commonly used in Spanish.
+From the user's perspective the code does the same, for the chat messages look as expected without emojis and without Latin accented characters commonly used in Spanish. However, from my perspective I know that instead of printing an ASCII character at a time (slow) there's only one call to `fprintf` to print the chat messages. And also I know that the ASCII characters are in the expected range (not greater than or equal to decimal 128).
