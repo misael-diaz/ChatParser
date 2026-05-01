@@ -49,9 +49,17 @@ int main()
 	fprintf(stdout, "chat-length (bytes): %lu\n", len_chat);
 	fprintf(stdout, "mmap-size (bytes): %lu\n", len_mmap);
 
-	void *bufchat = mmap(NULL, len_mmap, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (!bufchat) {
-		fprintf(stderr, "%s", "error: chat memory mapping failed\n");
+	void *srcbuf = mmap(NULL, len_mmap, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (!srcbuf) {
+		fprintf(stderr, "%s", "error: source chat memory mapping failed\n");
+		if (errno) {
+			fprintf(stderr, "%s\n", strerror(errno));
+		}
+		_exit(1);
+	}
+	void *dstbuf = mmap(NULL, len_mmap, PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+	if (!dstbuf) {
+		fprintf(stderr, "%s", "error: destination chat memory mapping failed\n");
 		if (errno) {
 			fprintf(stderr, "%s\n", strerror(errno));
 		}
@@ -59,8 +67,16 @@ int main()
 	}
 
 	close(fd);
-	if (-1 == (rc = madvise(bufchat, len_mmap, MADV_WILLNEED))) {
-		fprintf(stderr, "%s", "error: mmap fast access failed\n");
+	if (-1 == (rc = madvise(srcbuf, len_mmap, MADV_WILLNEED))) {
+		fprintf(stderr, "%s", "error: src mmap fast access failed\n");
+		if (errno) {
+			fprintf(stderr, "%s\n", strerror(errno));
+		}
+		_exit(1);
+	}
+
+	if (-1 == (rc = madvise(dstbuf, len_mmap, MADV_WILLNEED))) {
+		fprintf(stderr, "%s", "error: dest mmap sequential access failed\n");
 		if (errno) {
 			fprintf(stderr, "%s\n", strerror(errno));
 		}
@@ -68,7 +84,9 @@ int main()
 	}
 
 	uint64_t count = 0;
-	char unsigned *txt = bufchat;
+	uint64_t len_txt = 0;
+	char unsigned *txt = srcbuf;
+	char unsigned *dst = dstbuf;
 	uint32_t const head_utf8 = 0x00ffffff & (
 		(txt[3] << 24) |
 		(txt[2] << 16) |
@@ -88,13 +106,15 @@ int main()
 	while (len_chat > count) {
 		if (0x80u > (*txt)) {
 			if (((*txt) >= 0x41u) && ((*txt) < 0x5au)) {
-				fprintf(stdout, "%c", (((*txt) - 0x41u) + 0x61u));
+				*dst = (((*txt) - 0x41u) + 0x61u);
 			}
 			else {
-				fprintf(stdout, "%c", *txt);
+				*dst = *txt;
 			}
 			txt += 1;
+			dst += 1;
 			count += 1;
+			len_txt += 1;
 		}
 		else if (0xc2 > (*txt))  {
 			fprintf(stderr, "%s", "error: invalid utf-8 prefix\n");
@@ -103,39 +123,42 @@ int main()
 		else if (0xe0u > (*txt)) {
 			uint16_t const value = ((txt[1] << 8) | txt[0]);
 			if ((value >= 0x80c3u) && (value < 0x86c3u)) {
-				fprintf(stdout, "%c", 'a');
+				*dst = 'a';
 			}
 			else if ((value >= 0x88c3u) && (value < 0x8cc3u)) {
-				fprintf(stdout, "%c", 'e');
+				*dst = 'e';
 			}
 			else if ((value >= 0x8cc3u) && (value < 0x90c3u)) {
-				fprintf(stdout, "%c", 'i');
+				*dst = 'i';
 			}
 			else if ((value >= 0x92c3u) && (value < 0x97c3u)) {
-				fprintf(stdout, "%c", 'o');
+				*dst = 'o';
 			}
 			else if ((value >= 0x99c3u) && (value < 0x9ec3u)) {
 				fprintf(stdout, "%c", 'u');
+				*dst = 'u';
 			}
 			else if ((value >= 0xa0c3u) && (value < 0xa6c3u)) {
-				fprintf(stdout, "%c", 'a');
+				*dst = 'a';
 			}
 			else if ((value >= 0xa8c3u) && (value < 0xacc3u)) {
-				fprintf(stdout, "%c", 'e');
+				*dst = 'e';
 			}
 			else if ((value >= 0xacc3u) && (value < 0xb0c3u)) {
-				fprintf(stdout, "%c", 'i');
+				*dst = 'i';
 			}
 			else if ((value == 0xb1c3u)) {
-				fprintf(stdout, "%c", 'n');
+				*dst = 'n';
 			}
 			else if ((value >= 0xb2c3u) && (value < 0xb7c3u)) {
-				fprintf(stdout, "%c", 'o');
+				*dst = 'o';
 			}
 			else if ((value >= 0xb9c3u) && (value < 0xbdc3u)) {
-				fprintf(stdout, "%c", 'u');
+				*dst = 'u';
 			}
 			txt += 2;
+			dst += 1;
+			len_txt += 1;
 			count += 2;
 		}
 		else if (0xf0u > (*txt)) {
@@ -153,6 +176,16 @@ int main()
 	}
 	else {
 		fprintf(stdout, "%s %lu %s", "bytes-read:", count, "\n");
+		fprintf(stdout, "%s %lu %s", "bytes-kept:", len_txt, "\n");
 	}
+
+	dst = dstbuf;
+	for (int i = 0; i != len_txt; ++i) {
+		if (*dst >= 0x80u) {
+			fprintf(stderr, "%s", "error: unicode to ascii transliteration failed\n");
+			_exit(1);
+		}
+	}
+	fprintf(stdout, "%s", (char*) dstbuf);
 	return 0;
 }
