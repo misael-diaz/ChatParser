@@ -105,8 +105,17 @@ int main()
 	/* excludes emojis and other non-ASCII characters from the chat */
 	while (len_chat > count) {
 		if (0x80u > (*txt)) {
-			if (((*txt) >= 0x41u) && ((*txt) < 0x5au)) {
+			if (((*txt) < 0x0au)) {
+				*dst = 0x20u;
+			}
+			else if (((*txt) >= 0x0bu) && ((*txt) < 0x20u)) {
+				*dst = 0x20u;
+			}
+			else if (((*txt) >= 0x41u) && ((*txt) < 0x5au)) {
 				*dst = (((*txt) - 0x41u) + 0x61u);
+			}
+			else if ((0x7fu == (*txt))) {
+				*dst = 0x20u;
 			}
 			else {
 				*dst = *txt;
