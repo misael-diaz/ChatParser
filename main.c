@@ -111,7 +111,7 @@ int main()
 			else if (((*txt) >= 0x0bu) && ((*txt) < 0x20u)) {
 				*dst = 0x20u;
 			}
-			else if (((*txt) >= 0x41u) && ((*txt) < 0x5au)) {
+			else if (((*txt) >= 0x41u) && ((*txt) < 0x5bu)) {
 				*dst = (((*txt) - 0x41u) + 0x61u);
 			}
 			else if ((0x7fu == (*txt))) {
