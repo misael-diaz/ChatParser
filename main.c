@@ -188,6 +188,7 @@ int main()
 	}
 	srcbuf = NULL;
 
+#if DEVBUILD
 	dst = dstbuf;
 	for (int i = 0; i != len_txt; ++i) {
 		if (*dst >= 0x80u) {
@@ -196,5 +197,6 @@ int main()
 		}
 	}
 	fprintf(stdout, "%s", (char*) dstbuf);
+#endif
 	return 0;
 }
