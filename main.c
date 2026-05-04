@@ -179,6 +179,15 @@ int main()
 		fprintf(stdout, "%s %lu %s", "bytes-kept:", len_txt, "\n");
 	}
 
+	if (-1 == (rc = munmap(srcbuf, len_mmap))) {
+		fprintf(stderr, "%s", "error: unmapping chat failed\n");
+		if (errno) {
+			fprintf(stderr, "%s\n", strerror(errno));
+		}
+		_exit(1);
+	}
+	srcbuf = NULL;
+
 	dst = dstbuf;
 	for (int i = 0; i != len_txt; ++i) {
 		if (*dst >= 0x80u) {
