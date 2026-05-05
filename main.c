@@ -239,14 +239,26 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 
 */
 	dst = dstbuf;
+	int64_t sec = 0;
+	int64_t min = 0;
+	int64_t hour = 0;
+	int64_t mday = 0;
+	int64_t mon = 0;
+	int64_t year = 0;
+	int64_t const isdst = 0;
+	uint32_t lineno = 0;
 	uint8_t sz_timestamp = 0;
-	char unsigned ddmmyy[32];
-	memset(ddmmyy, 0, sizeof(ddmmyy));
+	void *vptr = NULL;
+	char *endptr = NULL;
+	char unsigned mmddyy[32];
+	memset(mmddyy, 0, sizeof(mmddyy));
 	for (int i = 0; i != len_txt; ++i, ++dst) {
 	    if ((dst[0] >= 0x30u) && (dst[0] < 0x3au)) {
 		if ('/' == dst[1]) {
+
 		    if ((dst[2] >= 0x30u) && (dst[2] < 0x3au)) {
 			if ('/' == dst[3]) {
+
 			    if (
 				    (dst[4] >= 0x30u) && (dst[4] < 0x3au) &&
 				    (dst[5] >= 0x30u) && (dst[5] < 0x3au) &&
@@ -267,6 +279,61 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					)
 				    )
 			       ) {
+
+				errno = 0;
+				vptr = &dst[0];
+				endptr = NULL;
+				lineno = (1 + (__LINE__));
+				mon = (strtol(vptr, &endptr, 0) - 1);
+				if (errno) {
+				    goto err;
+				}
+				else if ((!*endptr) || ('/' != endptr[0])) {
+				    goto err_uxchar_timestamp;
+				}
+				else if (1 != (endptr - ((char*) vptr))) {
+				    goto err_uxlen_timestamp;
+				}
+				else if (!(mon >= 0 && mon < 12)) {
+				    goto err_month_timestamp;
+				}
+
+				errno = 0;
+				vptr = &dst[2];
+				endptr = NULL;
+				lineno = (1 + (__LINE__));
+				mday = strtol(vptr, &endptr, 0);
+				if (errno) {
+				    goto err;
+				}
+				else if ((!*endptr) || ('/' != endptr[0])) {
+				    goto err_uxchar_timestamp;
+				}
+				else if (1 != (endptr - ((char*) vptr))) {
+				    goto err_uxlen_timestamp;
+				}
+				else if (!((mday >= 1) && (mday < 32))) {
+				    goto err_day_timestamp;
+				}
+
+				errno = 0;
+				vptr = &dst[4];
+				endptr = NULL;
+				lineno = (1 + (__LINE__));
+				year = (strtol(vptr, &endptr, 0) + (2000 - 1900));
+				if (errno) {
+				    goto err;
+				}
+				else if ((!*endptr) || (',' != endptr[0])) {
+				    goto err_uxchar_timestamp;
+				}
+				else if (2 != (endptr - ((char*) vptr))) {
+				    goto err_uxlen_timestamp;
+				}
+				else if (!((year >= (2026 - 1900)) && (year < (2038 - 1900)))) {
+				    goto err_year_timestamp;
+				}
+
 				uint16_t const AntePostMeridiemValue = ((dst[13] << 8) | dst[12]);
 				if (
 					(0x6d61u == AntePostMeridiemValue) ||
@@ -274,20 +341,21 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				   )
 				{
 				    sz_timestamp = 14;
-				    memcpy(ddmmyy, dst, sz_timestamp);
-				    ddmmyy[sz_timestamp] = 0;
+				    memcpy(mmddyy, dst, sz_timestamp);
+				    mmddyy[sz_timestamp] = 0;
 				}
 				else {
 				    sz_timestamp = 15;
-				    memcpy(ddmmyy, dst, sz_timestamp);
-				    ddmmyy[sz_timestamp] = 0;
+				    memcpy(mmddyy, dst, sz_timestamp);
+				    mmddyy[sz_timestamp] = 0;
 				}
-				fprintf(stdout, "%s\n", ddmmyy);
-				memset(ddmmyy, 0, sizeof(ddmmyy));
+				fprintf(stdout, "timestamp: %s mm/dd/yy: %ld/%ld/%ld\n", mmddyy, mon, mday, year);
+				memset(mmddyy, 0, sizeof(mmddyy));
 			    }
 			}
 			else if ((dst[3] >= 0x30u) && (dst[3] < 0x3au)) {
 			    if ('/' == dst[4]) {
+
 				if (
 					(dst[5] >= 0x30u) && (dst[5] < 0x3au) &&
 					(dst[6] >= 0x30u) && (dst[6] < 0x3au) &&
@@ -308,22 +376,77 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    )
 					)
 				   ) {
+
+				    errno = 0;
+				    vptr = &dst[0];
+				    endptr = NULL;
+				    lineno = (1 + (__LINE__));
+				    mon = (strtol(vptr, &endptr, 0) - 1);
+				    if (errno) {
+					goto err;
+				    }
+				    else if ((!*endptr) || ('/' != endptr[0])) {
+					goto err_uxchar_timestamp;
+				    }
+				    else if (1 != (endptr - ((char*) vptr))) {
+					goto err_uxlen_timestamp;
+				    }
+				    else if (!(mon >= 0 && mon < 12)) {
+					goto err_month_timestamp;
+				    }
+
+				    errno = 0;
+				    vptr = &dst[3];
+				    endptr = NULL;
+				    lineno = (1 + (__LINE__));
+				    mday = strtol(vptr, &endptr, 0);
+				    if (errno) {
+					goto err;
+				    }
+				    else if ((!*endptr) || ('/' != endptr[0])) {
+					goto err_uxchar_timestamp;
+				    }
+				    else if (1 != (endptr - ((char*) vptr))) {
+					goto err_uxlen_timestamp;
+				    }
+				    else if (!((mday >= 1) && (mday < 32))) {
+					goto err_day_timestamp;
+				    }
+
+				    errno = 0;
+				    vptr = &dst[5];
+				    endptr = NULL;
+				    lineno = (1 + (__LINE__));
+				    year = (strtol(vptr, &endptr, 0) + (2000 - 1900));
+				    if (errno) {
+					goto err;
+				    }
+				    else if ((!*endptr) || (',' != endptr[0])) {
+					goto err_uxchar_timestamp;
+				    }
+				    else if (2 != (endptr - ((char*) vptr))) {
+					goto err_uxlen_timestamp;
+				    }
+				    else if (!((year >= (2026 - 1900)) && (year < (2038 - 1900)))) {
+					goto err_year_timestamp;
+				    }
+
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
 					    (0x6d70u == AntePostMeridiemValue)
 				       ) {
 					sz_timestamp = 15;
-					memcpy(ddmmyy, dst, sz_timestamp);
-					ddmmyy[sz_timestamp] = 0;
+					memcpy(mmddyy, dst, sz_timestamp);
+					mmddyy[sz_timestamp] = 0;
 				    }
 				    else {
 					sz_timestamp = 16;
-					memcpy(ddmmyy, dst, sz_timestamp);
-					ddmmyy[sz_timestamp] = 0;
+					memcpy(mmddyy, dst, sz_timestamp);
+					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "%s\n", ddmmyy);
-				    memset(ddmmyy, 0, sizeof(ddmmyy));
+				    fprintf(stdout, "timestamp: %s mm/dd/yy: %ld/%ld/%ld\n", mmddyy, mon, mday, year);
+				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
 			}
@@ -331,8 +454,10 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 		}
 		else if ((dst[1] >= 0x30u) && (dst[1] < 0x3au)) {
 		    if ('/' == dst[2]) {
+
 			if ((dst[3] >= 0x30u) && (dst[3] < 0x3au)) {
 			    if ('/' == dst[4]) {
+
 				if (
 					(dst[5] >= 0x30u) && (dst[5] < 0x3au) &&
 					(dst[6] >= 0x30u) && (dst[6] < 0x3au) &&
@@ -353,26 +478,82 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    )
 					)
 				   ) {
+
+				    errno = 0;
+				    vptr = &dst[0];
+				    endptr = NULL;
+				    lineno = (1 + (__LINE__));
+				    mon = (strtol(vptr, &endptr, 0) - 1);
+				    if (errno) {
+					goto err;
+				    }
+				    else if ((!*endptr) || ('/' != endptr[0])) {
+					goto err_uxchar_timestamp;
+				    }
+				    else if (2 != (endptr - ((char*) vptr))) {
+					goto err_uxlen_timestamp;
+				    }
+				    else if (!(mon >= 0 && mon < 12)) {
+					goto err_month_timestamp;
+				    }
+
+				    errno = 0;
+				    vptr = &dst[3];
+				    endptr = NULL;
+				    lineno = (1 + (__LINE__));
+				    mday = strtol(vptr, &endptr, 0);
+				    if (errno) {
+					goto err;
+				    }
+				    else if ((!*endptr) || ('/' != endptr[0])) {
+					goto err_uxchar_timestamp;
+				    }
+				    else if (1 != (endptr - ((char*) vptr))) {
+					goto err_uxlen_timestamp;
+				    }
+				    else if (!((mday >= 1) && (mday < 32))) {
+					goto err_day_timestamp;
+				    }
+
+				    errno = 0;
+				    vptr = &dst[5];
+				    endptr = NULL;
+				    lineno = (1 + (__LINE__));
+				    year = (strtol(vptr, &endptr, 0) + (2000 - 1900));
+				    if (errno) {
+					goto err;
+				    }
+				    else if ((!*endptr) || (',' != endptr[0])) {
+					goto err_uxchar_timestamp;
+				    }
+				    else if (2 != (endptr - ((char*) vptr))) {
+					goto err_uxlen_timestamp;
+				    }
+				    else if (!((year >= (2026 - 1900)) && year < (2038 - 1900))) {
+					goto err_year_timestamp;
+				    }
+
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
 					    (0x6d70u == AntePostMeridiemValue)
 				       ) {
 					sz_timestamp = 15;
-					memcpy(ddmmyy, dst, sz_timestamp);
-					ddmmyy[sz_timestamp] = 0;
+					memcpy(mmddyy, dst, sz_timestamp);
+					mmddyy[sz_timestamp] = 0;
 				    }
 				    else {
 					sz_timestamp = 16;
-					memcpy(ddmmyy, dst, sz_timestamp);
-					ddmmyy[sz_timestamp] = 0;
+					memcpy(mmddyy, dst, sz_timestamp);
+					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "%s\n", ddmmyy);
-				    memset(ddmmyy, 0, sizeof(ddmmyy));
+				    fprintf(stdout, "timestamp: %s mm/dd/yy: %ld/%ld/%ld\n", mmddyy, mon, mday, year);
+				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
 			    else if ((dst[4] >= 0x30u) && (dst[4] < 0x3au)) {
 				if ('/' == dst[5]) {
+
 				    if (
 					    (dst[6] >= 0x30u) && (dst[6] < 0x3au) &&
 					    (dst[7] >= 0x30u) && (dst[7] < 0x3au) &&
@@ -393,22 +574,77 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 						)
 					    )
 				       ) {
+
+					errno = 0;
+					vptr = &dst[0];
+					endptr = NULL;
+					lineno = (1 + (__LINE__));
+					mon = (strtol(vptr, &endptr, 0) - 1);
+					if (errno) {
+					    goto err;
+					}
+					else if ((!*endptr) || ('/' != endptr[0])) {
+					    goto err_uxchar_timestamp;
+					}
+					else if (2 != (endptr - ((char*) vptr))) {
+					    goto err_uxlen_timestamp;
+					}
+					else if (!(mon >= 0 && mon < 12)) {
+					    goto err_month_timestamp;
+					}
+
+					errno = 0;
+					vptr = &dst[3];
+					endptr = NULL;
+					lineno = (1 + (__LINE__));
+					mday = strtol(vptr, &endptr, 0);
+					if (errno) {
+					    goto err;
+					}
+					else if ((!*endptr) || ('/' != endptr[0])) {
+					    goto err_uxchar_timestamp;
+					}
+					else if (2 != (endptr - ((char*) vptr))) {
+					    goto err_uxlen_timestamp;
+					}
+					else if (!((mday >= 1) && (mday < 32))) {
+					    goto err_day_timestamp;
+					}
+
+					errno = 0;
+					vptr = &dst[6];
+					endptr = NULL;
+					lineno = (1 + (__LINE__));
+					year = (strtol(vptr, &endptr, 0) + (2000 - 1900));
+					if (errno) {
+					    goto err;
+					}
+					else if ((!*endptr) || (',' != endptr[0])) {
+					    goto err_uxchar_timestamp;
+					}
+					else if (2 != (endptr - ((char*) vptr))) {
+					    goto err_uxlen_timestamp;
+					}
+					else if (!((year >= (2026 - 1900)) && year < (2038 - 1900))) {
+					    goto err_year_timestamp;
+					}
+
 					uint16_t const AntePostMeridiemValue = ((dst[15] << 8) | dst[14]);
 					if (
 						(0x6d61u == AntePostMeridiemValue) ||
 						(0x6d70u == AntePostMeridiemValue)
 					   ) {
 					    sz_timestamp = 16;
-					    memcpy(ddmmyy, dst, sz_timestamp);
-					    ddmmyy[sz_timestamp] = 0;
+					    memcpy(mmddyy, dst, sz_timestamp);
+					    mmddyy[sz_timestamp] = 0;
 					}
 					else {
 					    sz_timestamp = 17;
-					    memcpy(ddmmyy, dst, sz_timestamp);
-					    ddmmyy[sz_timestamp] = 0;
+					    memcpy(mmddyy, dst, sz_timestamp);
+					    mmddyy[sz_timestamp] = 0;
 					}
-					fprintf(stdout, "%s\n", ddmmyy);
-					memset(ddmmyy, 0, sizeof(ddmmyy));
+					fprintf(stdout, "timestamp: %s mm/dd/yy: %ld/%ld/%ld\n", mmddyy, mon, mday, year);
+					memset(mmddyy, 0, sizeof(mmddyy));
 				    }
 				}
 			    }
@@ -451,4 +687,44 @@ and this is my case.
 	fprintf(stdout, "secs: %ld\n", time);
 #endif
 	return 0;
+
+#if DEVBUILD
+err:
+	{
+	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
+	    fprintf(stderr, "%s\n", strerror(errno));
+	    _exit(1);
+	}
+err_uxchar_timestamp:
+	{
+	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
+	    fprintf(stderr, "%s\n", strerror(errno));
+	    fprintf(stderr, "%s", "error: unexpected character encountered on conversion\n");
+	    _exit(1);
+	}
+err_month_timestamp:
+	{
+	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
+	    fprintf(stderr, "%s", "error: invalid month value on conversion\n");
+	    _exit(1);
+	}
+err_day_timestamp:
+	{
+	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
+	    fprintf(stderr, "%s", "error: invalid day value on conversion\n");
+	    _exit(1);
+	}
+err_year_timestamp:
+	{
+	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
+	    fprintf(stderr, "%s", "error: invalid year value on conversion\n");
+	    _exit(1);
+	}
+err_uxlen_timestamp:
+	{
+	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
+	    fprintf(stderr, "%s", "error: unexpected time field (dd/mm/yy) length detected\n");
+	    _exit(1);
+	}
+#endif
 }
