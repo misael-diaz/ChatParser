@@ -12,6 +12,16 @@ All I am going to say is that if you know the tech you can develop your own tool
 
 ## Development Status
 
+This section is devoted to log the development of this application to keep a comprehensive history beyond what one can usually find from git-commit logs. I talk about edge cases, problems and their solutions, design and performance considerations, etc.
+
+Quick access to the development logs:
+
+- [Day 1: Exploring Unicode](#day-1)
+- [Day 2: Unicode to ASCII Transliteration](#day-2)
+- [Day 3: Transliterator Portability](#day-3)
+- [Day 4: Exploring Timestamp Encodings](#day-4)
+
+
 ### Day 1
 The drive of the first day is to experiment with the idea: Can I parse [Unicode](https://www.w3schools.com/charsets/ref_html_utf8.asp) encoded text file without using a library?
 
@@ -105,3 +115,36 @@ Extended the code to efficiently (sequential access) write chat messages to an a
 
 #### Testing
 From the user's perspective the code does the same, for the chat messages look as expected without emojis and without Latin accented characters commonly used in Spanish. However, from my perspective I know that instead of printing an ASCII character at a time (slow) there's only one call to `fprintf` to print the chat messages. And also I know that the ASCII characters are in the expected range (not greater than or equal to decimal 128).
+
+### Day 4
+On this day I have mostly focused on researching how to deal with timestamps in a timezone agnostic way.  The problem is that the timestamps in the WhatsApp chat messages are based with respect to the geographical timezone and the compute server has a different timezone. This means that the application is reading timestamps from WhatsApp that correspond to a different timezone than that of the underlying platform.  Of course Meta has no reason to include the timezone data in the timestamps, if you want them you might have to register to the WhatsApp API.
+
+
+#### Achievements
+Laid out a plan to handle missing timezone data from the WhatsApp chat timestamps. The plan boils down to setting the timezone environment variable before parsing the chat data and leverage the system util [`mktime()`](https://man7.org/linux/man-pages/man3/mktime.3p.html) to obtain 64-bit encoded timestamps. The 64-bit encoding is equivalent to the number of seconds that have elapsed since the Unix Epoch (`1970-01-01 00:00:00 +0000 (UTC)`). Commit [acd6f4c]( https://github.com/misael-diaz/ChatParser/commit/acd6f4c08dee4e2144c35de10091819f30d6dea6) experiments with the timestamp encoding and it looks promising.
+
+
+**Advantages**
+
+The advantages of the timestamp encoding solution are outlined here:
+
+- **Storage**: Storing the timestamps as 64-bit integers in the database is efficient, it is preferable to storing them as a string which could introduce interpretation errors down the rode. One also has to consider that if the timestamp is stored as a string one needs to include the timezone data as well.
+
+- **Sorting**: Querying the database with respect to time often involves sorting and that means that the cost of sorting is tied to the number of operations needed to compare timestamps. From an algorithmic standpoint, it is clear that comparing integers is faster than comparing strings. 
+ 
+- **Duplicate Timestamps**: Timestamp duplicates are quite common in WhatsApp chat messages because WhatsApp exports chats with timestamps with a resolution of minutes.  To differentiate them all that we need to do is to add a suitable time-interval (seconds) between them.  An elaborate solution would be to estimate the time it takes to write the text based on the number of characters but a simple constant addition will do for practical purposes.
+
+
+#### Considerations
+- Need to take into account how SQLite handles timestamps given as 64-bit integers. This involves reading SQLite's documentation.
+
+- Address probable edge cases not yet considered in this exploratory phase. For example, what if in the future a client wants a web-based dashboard application. Would we need an API that would handle the edge cases to keep the frontend code strictly for presenting the content, rather than to deal with data processing?
+
+
+#### Testing
+I also experimented with using simple conditionals instead of regular expressions (regex) for locating the timestamps in the chat. The choice for simple logic has been favored over regex because it allows me to establish a baseline for benchmarking if the code ever needs regex down the road.  Another reason for sticking with simple logic is that we can look at the underlying patterns (or code execution branches) that the regex would take.  It is also probable that even with a regex we will need additional logic to handle the construction of the helper time structure `struct tm` for handling hours. Note that the time struct expects hours in the (exclusive) range from 0 to 24; whereas, the WhatsApp chat provides hours in the (inclusive) range from 0 to 12 (AM | PM).
+
+The experimental version of the timestamp locator code has been committed to commit [f6eb650]( https://github.com/misael-diaz/ChatParser/commit/f6eb650895e8ebb0d2f0a59e1cfaa0e17a600e0b ). Testing has confirmed that it can detect typical timestamps from WhatsApp Business chats.
+
+#### Conclusions
+It is reassuring to find out that Chromium's JavaScript [V8 engine](https://github.com/v8/v8/blob/bd3ed01527c850cd5268fb11ecd4cc9576333d5c/src/base/platform/platform-cygwin.cc#L86)&mdash;the engine that powers the most popular browsers&mdash;reaches out for the same system time utilities that I used for handling timezone offsets.

@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #define BOM_UTF8 0x00bfbbefu
 
@@ -105,8 +106,17 @@ int main()
 	/* excludes emojis and other non-ASCII characters from the chat */
 	while (len_chat > count) {
 		if (0x80u > (*txt)) {
-			if (((*txt) >= 0x41u) && ((*txt) < 0x5au)) {
+			if (((*txt) < 0x0au)) {
+				*dst = 0x20u;
+			}
+			else if (((*txt) >= 0x0bu) && ((*txt) < 0x20u)) {
+				*dst = 0x20u;
+			}
+			else if (((*txt) >= 0x41u) && ((*txt) < 0x5bu)) {
 				*dst = (((*txt) - 0x41u) + 0x61u);
+			}
+			else if ((0x7fu == (*txt))) {
+				*dst = 0x20u;
 			}
 			else {
 				*dst = *txt;
@@ -179,13 +189,212 @@ int main()
 		fprintf(stdout, "%s %lu %s", "bytes-kept:", len_txt, "\n");
 	}
 
+	if (-1 == (rc = munmap(srcbuf, len_mmap))) {
+		fprintf(stderr, "%s", "error: unmapping chat failed\n");
+		if (errno) {
+			fprintf(stderr, "%s\n", strerror(errno));
+		}
+		_exit(1);
+	}
+	srcbuf = NULL;
+
+#if DEVBUILD
 	dst = dstbuf;
-	for (int i = 0; i != len_txt; ++i) {
-		if (*dst >= 0x80u) {
-			fprintf(stderr, "%s", "error: unicode to ascii transliteration failed\n");
+	char const *normerr = "error: ascii normalization failed\n";
+	char const *folderr = "error: ascii folding failed\n";
+	char const *tliterr = "error: unicode to ascii transliteration failed\n";
+	for (int i = 0; i != len_txt; ++i, ++dst) {
+		if ((*dst < 0x0au)) {
+			fprintf(stderr, "%s", normerr);
+			_exit(1);
+		}
+		else if ((*dst >= 0x0bu) && (*dst < 0x20u)) {
+			fprintf(stderr, "%s", normerr);
+			_exit(1);
+		}
+		else if (((*dst) >= 0x41u) && ((*dst) < 0x5bu)) {
+			fprintf(stderr, "%s", folderr);
+			_exit(1);
+		}
+		else if (*dst >= 0x7fu) {
+			fprintf(stderr, "%s", tliterr);
 			_exit(1);
 		}
 	}
 	fprintf(stdout, "%s", (char*) dstbuf);
+
+/*
+
+EXPERIMENTAL TIMESTAMP DETECTION CODE
+
+- uses simple conditionals to locate timestamps
+- need to set the struct tm according to the AM and PM cases
+- for the time being the timestamp is shown on the console for verification
+- consider checking for the hyphen `-` as well
+- consider checking for the newline character preceeding the timestamp or the first-character in the buffer
+- consider using a regex in the future to account for the presence of the username followed by a colon `:`
+  to make it less likely to confuse the timestamp with the chat text
+- of course there's a certain degree of repetition that could be taken into account for refactoring but
+  right now this is exploratory code and I am fine with repetition
+
+*/
+	dst = dstbuf;
+	char unsigned ddmmyy[16];
+	memset(ddmmyy, 0, sizeof(ddmmyy));
+	for (int i = 0; i != len_txt; ++i, ++dst) {
+	    if ((dst[0] >= 0x30u) && (dst[0] < 0x3au)) {
+		if ('/' == dst[1]) {
+		    if ((dst[2] >= 0x30u) && (dst[2] < 0x3au)) {
+			if ('/' == dst[3]) {
+			    if (
+				    (dst[4] >= 0x30u) && (dst[4] < 0x3au) &&
+				    (dst[5] >= 0x30u) && (dst[5] < 0x3au) &&
+				    (dst[6] == ',') &&
+				    (dst[7] == ' ') && (
+					(
+					 (dst[8] >= 0x30u) && (dst[8] < 0x3au) &&
+					 (dst[9] == ':') &&
+					 (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
+					 (dst[11] >= 0x30u) && (dst[11] < 0x3au)
+					) ||
+					(
+					 (dst[8] >= 0x30u) && (dst[8] < 0x3au) &&
+					 (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
+					 (dst[10] == ':') &&
+					 (dst[11] >= 0x30u) && (dst[11] < 0x3au) &&
+					 (dst[12] >= 0x30u) && (dst[12] < 0x3au)
+					)
+				    )
+			       ) {
+				memcpy(ddmmyy, dst, 13);
+				fprintf(stdout, "%s\n", ddmmyy);
+				memset(ddmmyy, 0, sizeof(ddmmyy));
+			    }
+			}
+			else if ((dst[3] >= 0x30u) && (dst[3] < 0x3au)) {
+			    if ('/' == dst[4]) {
+				if (
+					(dst[5] >= 0x30u) && (dst[5] < 0x3au) &&
+					(dst[6] >= 0x30u) && (dst[6] < 0x3au) &&
+					(dst[7] == ',') &&
+					(dst[8] == ' ') && (
+					    (
+					     (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
+					     (dst[10] == ':') &&
+					     (dst[11] >= 0x30u) && (dst[11] < 0x3au) &&
+					     (dst[12] >= 0x30u) && (dst[12] < 0x3au)
+					    ) ||
+					    (
+					     (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
+					     (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
+					     (dst[11] == ':') &&
+					     (dst[12] >= 0x30u) && (dst[12] < 0x3au) &&
+					     (dst[13] >= 0x30u) && (dst[13] < 0x3au)
+					    )
+					)
+				   ) {
+				    memcpy(ddmmyy, dst, 14);
+				    fprintf(stdout, "%s\n", ddmmyy);
+				    memset(ddmmyy, 0, sizeof(ddmmyy));
+				}
+			    }
+			}
+		    }
+		}
+		else if ((dst[1] >= 0x30u) && (dst[1] < 0x3au)) {
+		    if ('/' == dst[2]) {
+			if ((dst[3] >= 0x30u) && (dst[3] < 0x3au)) {
+			    if ('/' == dst[4]) {
+				if (
+					(dst[5] >= 0x30u) && (dst[5] < 0x3au) &&
+					(dst[6] >= 0x30u) && (dst[6] < 0x3au) &&
+					(dst[7] == ',') &&
+					(dst[8] == ' ') && (
+					    (
+					     (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
+					     (dst[10] == ':') &&
+					     (dst[11] >= 0x30u) && (dst[11] < 0x3au) &&
+					     (dst[12] >= 0x30u) && (dst[12] < 0x3au)
+					    ) ||
+					    (
+					     (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
+					     (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
+					     (dst[11] == ':') &&
+					     (dst[12] >= 0x30u) && (dst[12] < 0x3au) &&
+					     (dst[13] >= 0x30u) && (dst[13] < 0x3au)
+					    )
+					)
+				   ) {
+				    memcpy(ddmmyy, dst, 14);
+				    fprintf(stdout, "%s\n", ddmmyy);
+				    memset(ddmmyy, 0, sizeof(ddmmyy));
+				}
+			    }
+			    else if ((dst[4] >= 0x30u) && (dst[4] < 0x3au)) {
+				if ('/' == dst[5]) {
+				    if (
+					    (dst[6] >= 0x30u) && (dst[6] < 0x3au) &&
+					    (dst[7] >= 0x30u) && (dst[7] < 0x3au) &&
+					    (dst[8] == ',') &&
+					    (dst[9] == ' ') && (
+						(
+						 (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
+						 (dst[11] == ':') &&
+						 (dst[12] >= 0x30u) && (dst[12] < 0x3au) &&
+						 (dst[13] >= 0x30u) && (dst[13] < 0x3au)
+						) ||
+						(
+						 (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
+						 (dst[11] >= 0x30u) && (dst[11] < 0x3au) &&
+						 (dst[12] == ':') &&
+						 (dst[13] >= 0x30u) && (dst[13] < 0x3au) &&
+						 (dst[14] >= 0x30u) && (dst[14] < 0x3au)
+						)
+					    )
+				       ) {
+					memcpy(ddmmyy, dst, 15);
+					fprintf(stdout, "%s\n", ddmmyy);
+					memset(ddmmyy, 0, sizeof(ddmmyy));
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+/*
+
+EXPERIMENTAL TIMESTAMPS CODE:
+
+The following experimental code is going to be removed in a future commit since this is just for verification.
+
+The experimental code gives us the idea of what the chat-parser should do with timestamps:
+construct a `struct tm` -> mktime() -> time_t (64-bit integer) representating the number of seconds since
+the Unix Epoch.
+
+The advantage of doing this is that the math is simple, sorting is also simple, and the
+time data is unambiguous regardless of the location where the database is hosted.
+
+Key points here, setting isdst to zero, meaning no daylight savings, and this makes sense for my use case.
+The other point is to set the timezone before calling `mktime` so that system timezone won't interfere
+with the timestamps. This matters when the system timezone does not match the timezone of the chats,
+and this is my case.
+
+*/
+	struct tm t = {};
+	t.tm_sec = 18;
+	t.tm_min = 18;
+	t.tm_hour = 18;
+	t.tm_mday = 4;
+	t.tm_mon = 4;
+	t.tm_year = 2026 - 1900;
+	t.tm_isdst = 0;
+	setenv("TZ", "EST-5:00:00", 1);
+	int64_t time = mktime(&t);
+	fprintf(stdout, "%s\n", *tzname);
+	fprintf(stdout, "%s\n", getenv("TZ"));
+	fprintf(stdout, "secs: %ld\n", time);
+#endif
 	return 0;
 }
