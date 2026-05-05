@@ -334,6 +334,27 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    goto err_year_timestamp;
 				}
 
+				errno = 0;
+				vptr = &dst[8];
+				endptr = NULL;
+				lineno = (1 + (__LINE__));
+				hour = strtol(vptr, &endptr, 0);
+				if (errno) {
+				    goto err;
+				}
+				else if ((!*endptr) || (':' != endptr[0])) {
+				    goto err_uxchar_timestamp;
+				}
+				else if (
+					(1 != (endptr - ((char*) vptr))) &&
+					(2 != (endptr - ((char*) vptr)))
+					) {
+				    goto err_uxlen_timestamp;
+				}
+				else if (!((hour >= 0) && (hour < 24))) {
+				    goto err_hour_timestamp;
+				}
+
 				uint16_t const AntePostMeridiemValue = ((dst[13] << 8) | dst[12]);
 				if (
 					(0x6d61u == AntePostMeridiemValue) ||
@@ -349,7 +370,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    memcpy(mmddyy, dst, sz_timestamp);
 				    mmddyy[sz_timestamp] = 0;
 				}
-				fprintf(stdout, "timestamp: %s mm/dd/yy: %ld/%ld/%ld\n", mmddyy, mon, mday, year);
+				fprintf(stdout, "timestamp: %s mm/dd/yy, hh: %ld/%ld/%ld, %ld\n", mmddyy, mon, mday, year, hour);
 				memset(mmddyy, 0, sizeof(mmddyy));
 			    }
 			}
@@ -431,6 +452,27 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					goto err_year_timestamp;
 				    }
 
+				    errno = 0;
+				    vptr = &dst[9];
+				    endptr = NULL;
+				    lineno = (1 + (__LINE__));
+				    hour = strtol(vptr, &endptr, 0);
+				    if (errno) {
+					goto err;
+				    }
+				    else if ((!*endptr) || (':' != endptr[0])) {
+					goto err_uxchar_timestamp;
+				    }
+				    else if (
+					    (1 != (endptr - ((char*) vptr))) &&
+					    (2 != (endptr - ((char*) vptr)))
+					    ) {
+					goto err_uxlen_timestamp;
+				    }
+				    else if (!((hour >= 0) && (hour < 24))) {
+					goto err_hour_timestamp;
+				    }
+
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
@@ -445,7 +487,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy: %ld/%ld/%ld\n", mmddyy, mon, mday, year);
+				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh: %ld/%ld/%ld, %ld\n", mmddyy, mon, mday, year, hour);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
@@ -533,6 +575,27 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					goto err_year_timestamp;
 				    }
 
+				    errno = 0;
+				    vptr = &dst[9];
+				    endptr = NULL;
+				    lineno = (1 + (__LINE__));
+				    hour = strtol(vptr, &endptr, 0);
+				    if (errno) {
+					goto err;
+				    }
+				    else if ((!*endptr) || (':' != endptr[0])) {
+					goto err_uxchar_timestamp;
+				    }
+				    else if (
+					    (1 != (endptr - ((char*) vptr))) &&
+					    (2 != (endptr - ((char*) vptr)))
+					    ) {
+					goto err_uxlen_timestamp;
+				    }
+				    else if (!((hour >= 0) && (hour < 24))) {
+					goto err_hour_timestamp;
+				    }
+
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
@@ -547,7 +610,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy: %ld/%ld/%ld\n", mmddyy, mon, mday, year);
+				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh: %ld/%ld/%ld, %ld\n", mmddyy, mon, mday, year, hour);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
@@ -629,6 +692,27 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    goto err_year_timestamp;
 					}
 
+					errno = 0;
+					vptr = &dst[10];
+					endptr = NULL;
+					lineno = (1 + (__LINE__));
+					hour = strtol(vptr, &endptr, 0);
+					if (errno) {
+					    goto err;
+					}
+					else if ((!*endptr) || (':' != endptr[0])) {
+					    goto err_uxchar_timestamp;
+					}
+					else if (
+						(1 != (endptr - ((char*) vptr))) &&
+						(2 != (endptr - ((char*) vptr)))
+						) {
+					    goto err_uxlen_timestamp;
+					}
+					else if (!((hour >= 0) && (hour < 24))) {
+					    goto err_hour_timestamp;
+					}
+
 					uint16_t const AntePostMeridiemValue = ((dst[15] << 8) | dst[14]);
 					if (
 						(0x6d61u == AntePostMeridiemValue) ||
@@ -643,7 +727,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    memcpy(mmddyy, dst, sz_timestamp);
 					    mmddyy[sz_timestamp] = 0;
 					}
-					fprintf(stdout, "timestamp: %s mm/dd/yy: %ld/%ld/%ld\n", mmddyy, mon, mday, year);
+					fprintf(stdout, "timestamp: %s mm/dd/yy, hh: %ld/%ld/%ld, %ld\n", mmddyy, mon, mday, year, hour);
 					memset(mmddyy, 0, sizeof(mmddyy));
 				    }
 				}
@@ -718,6 +802,12 @@ err_year_timestamp:
 	{
 	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
 	    fprintf(stderr, "%s", "error: invalid year value on conversion\n");
+	    _exit(1);
+	}
+err_hour_timestamp:
+	{
+	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
+	    fprintf(stderr, "%s", "error: invalid hour value on conversion\n");
 	    _exit(1);
 	}
 err_uxlen_timestamp:
