@@ -18,7 +18,7 @@ Quick access to the development logs:
 
 - [Day 1: Exploring Unicode](#day-1)
 - [Day 2: Unicode to ASCII Transliteration](#day-2)
-- [Day 3: Tranliteration Portability](#day-3)
+- [Day 3: Transliterator Portability](#day-3)
 - [Day 4: Exploring Timestamp Encodings](#day-4)
 
 
