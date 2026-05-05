@@ -12,6 +12,16 @@ All I am going to say is that if you know the tech you can develop your own tool
 
 ## Development Status
 
+This section is devoted to log the development of this application to keep a comprehensive history beyond what one can usually find from git-commit logs. I talk about edge cases, problems and their solutions, design and performance considerations, etc.
+
+Quick access to the development logs:
+
+- [Day 1](#day-1)
+- [Day 2](#day-2)
+- [Day 3](#day-3)
+- [Day 4](#day-4)
+
+
 ### Day 1
 The drive of the first day is to experiment with the idea: Can I parse [Unicode](https://www.w3schools.com/charsets/ref_html_utf8.asp) encoded text file without using a library?
 
