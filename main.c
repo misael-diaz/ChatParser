@@ -239,7 +239,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 
 */
 	dst = dstbuf;
-	char unsigned ddmmyy[16];
+	char unsigned ddmmyy[32];
 	memset(ddmmyy, 0, sizeof(ddmmyy));
 	for (int i = 0; i != len_txt; ++i, ++dst) {
 	    if ((dst[0] >= 0x30u) && (dst[0] < 0x3au)) {
@@ -266,7 +266,17 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					)
 				    )
 			       ) {
-				memcpy(ddmmyy, dst, 13);
+				uint16_t const AntePostMeridiemValue = ((dst[13] << 8) | dst[12]);
+				if (
+					(0x6d61u == AntePostMeridiemValue) ||
+					(0x6d70u == AntePostMeridiemValue)
+				   )
+				{
+				    memcpy(ddmmyy, dst, 14);
+				}
+				else {
+				    memcpy(ddmmyy, dst, 15);
+				}
 				fprintf(stdout, "%s\n", ddmmyy);
 				memset(ddmmyy, 0, sizeof(ddmmyy));
 			    }
@@ -293,7 +303,16 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    )
 					)
 				   ) {
-				    memcpy(ddmmyy, dst, 14);
+				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
+				    if (
+					    (0x6d61u == AntePostMeridiemValue) ||
+					    (0x6d70u == AntePostMeridiemValue)
+				       ) {
+					memcpy(ddmmyy, dst, 15);
+				    }
+				    else {
+					memcpy(ddmmyy, dst, 16);
+				    }
 				    fprintf(stdout, "%s\n", ddmmyy);
 				    memset(ddmmyy, 0, sizeof(ddmmyy));
 				}
@@ -325,7 +344,16 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    )
 					)
 				   ) {
-				    memcpy(ddmmyy, dst, 14);
+				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
+				    if (
+					    (0x6d61u == AntePostMeridiemValue) ||
+					    (0x6d70u == AntePostMeridiemValue)
+				       ) {
+					memcpy(ddmmyy, dst, 15);
+				    }
+				    else {
+					memcpy(ddmmyy, dst, 16);
+				    }
 				    fprintf(stdout, "%s\n", ddmmyy);
 				    memset(ddmmyy, 0, sizeof(ddmmyy));
 				}
@@ -352,7 +380,16 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 						)
 					    )
 				       ) {
-					memcpy(ddmmyy, dst, 15);
+					uint16_t const AntePostMeridiemValue = ((dst[15] << 8) | dst[14]);
+					if (
+						(0x6d61u == AntePostMeridiemValue) ||
+						(0x6d70u == AntePostMeridiemValue)
+					   ) {
+					    memcpy(ddmmyy, dst, 16);
+					}
+					else {
+					    memcpy(ddmmyy, dst, 17);
+					}
 					fprintf(stdout, "%s\n", ddmmyy);
 					memset(ddmmyy, 0, sizeof(ddmmyy));
 				    }
