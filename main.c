@@ -246,6 +246,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 	int64_t mday = 0;
 	int64_t mon = 0;
 	int64_t year = 0;
+	int64_t encoded_time = 0;
 	int64_t const isdst = 0;
 	uint32_t lineno = 0;
 	uint8_t sz_timestamp = 0;
@@ -394,6 +395,13 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				tp->tm_year = year;
 				tp->tm_isdst = isdst;
 
+				errno = 0;
+				lineno = (1 + __LINE__);
+				encoded_time = mktime(tp);
+				if (errno) {
+					goto err_encoding_timestamp;
+				}
+
 				uint16_t const AntePostMeridiemValue = ((dst[13] << 8) | dst[12]);
 				if (
 					(0x6d61u == AntePostMeridiemValue) ||
@@ -409,7 +417,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    memcpy(mmddyy, dst, sz_timestamp);
 				    mmddyy[sz_timestamp] = 0;
 				}
-				fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld\n", mmddyy, mon, mday, year, hour, tmin);
+				fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				memset(mmddyy, 0, sizeof(mmddyy));
 			    }
 			}
@@ -548,6 +556,13 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    tp->tm_year = year;
 				    tp->tm_isdst = isdst;
 
+				    errno = 0;
+				    lineno = (1 + __LINE__);
+				    encoded_time = mktime(tp);
+				    if (-1 == encoded_time) {
+					    goto err_encoding_timestamp;
+				    }
+
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
@@ -562,7 +577,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld\n", mmddyy, mon, mday, year, hour, tmin);
+				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
@@ -707,6 +722,13 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    tp->tm_year = year;
 				    tp->tm_isdst = isdst;
 
+				    errno = 0;
+				    lineno = (1 + __LINE__);
+				    encoded_time = mktime(tp);
+				    if (-1 == encoded_time) {
+					    goto err_encoding_timestamp;
+				    }
+
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
@@ -721,7 +743,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld\n", mmddyy, mon, mday, year, hour, tmin);
+				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
@@ -860,6 +882,13 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					tp->tm_year = year;
 					tp->tm_isdst = isdst;
 
+					errno = 0;
+					lineno = (1 + __LINE__);
+					encoded_time = mktime(tp);
+					if (-1 == encoded_time) {
+						goto err_encoding_timestamp;
+					}
+
 					uint16_t const AntePostMeridiemValue = ((dst[15] << 8) | dst[14]);
 					if (
 						(0x6d61u == AntePostMeridiemValue) ||
@@ -874,7 +903,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    memcpy(mmddyy, dst, sz_timestamp);
 					    mmddyy[sz_timestamp] = 0;
 					}
-					fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld\n", mmddyy, mon, mday, year, hour, tmin);
+					fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 					memset(mmddyy, 0, sizeof(mmddyy));
 				    }
 				}
@@ -961,6 +990,22 @@ err_min_timestamp:
 	{
 	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
 	    fprintf(stderr, "%s", "error: invalid minute value on conversion\n");
+	    _exit(1);
+	}
+err_encoding_timestamp:
+/*
+
+NOTE:
+mktime() sets the errno but that alone won't suffice to know if it failed, this is why we have to check the
+returned value and then maybe look at the errno for more info for completeness.
+
+*/
+	{
+	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
+	    fprintf(stderr, "%s", "error: invalid time value passed to mktime util\n");
+	    if (errno) {
+		    fprintf(stderr, "%s\n", strerror(errno));
+	    }
 	    _exit(1);
 	}
 err_uxlen_timestamp:
