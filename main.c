@@ -239,6 +239,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 
 */
 	dst = dstbuf;
+	uint8_t sz_timestamp = 0;
 	char unsigned ddmmyy[32];
 	memset(ddmmyy, 0, sizeof(ddmmyy));
 	for (int i = 0; i != len_txt; ++i, ++dst) {
@@ -272,10 +273,14 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					(0x6d70u == AntePostMeridiemValue)
 				   )
 				{
-				    memcpy(ddmmyy, dst, 14);
+				    sz_timestamp = 14;
+				    memcpy(ddmmyy, dst, sz_timestamp);
+				    ddmmyy[sz_timestamp] = 0;
 				}
 				else {
-				    memcpy(ddmmyy, dst, 15);
+				    sz_timestamp = 15;
+				    memcpy(ddmmyy, dst, sz_timestamp);
+				    ddmmyy[sz_timestamp] = 0;
 				}
 				fprintf(stdout, "%s\n", ddmmyy);
 				memset(ddmmyy, 0, sizeof(ddmmyy));
@@ -308,10 +313,14 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    (0x6d61u == AntePostMeridiemValue) ||
 					    (0x6d70u == AntePostMeridiemValue)
 				       ) {
-					memcpy(ddmmyy, dst, 15);
+					sz_timestamp = 15;
+					memcpy(ddmmyy, dst, sz_timestamp);
+					ddmmyy[sz_timestamp] = 0;
 				    }
 				    else {
-					memcpy(ddmmyy, dst, 16);
+					sz_timestamp = 16;
+					memcpy(ddmmyy, dst, sz_timestamp);
+					ddmmyy[sz_timestamp] = 0;
 				    }
 				    fprintf(stdout, "%s\n", ddmmyy);
 				    memset(ddmmyy, 0, sizeof(ddmmyy));
@@ -349,10 +358,14 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    (0x6d61u == AntePostMeridiemValue) ||
 					    (0x6d70u == AntePostMeridiemValue)
 				       ) {
-					memcpy(ddmmyy, dst, 15);
+					sz_timestamp = 15;
+					memcpy(ddmmyy, dst, sz_timestamp);
+					ddmmyy[sz_timestamp] = 0;
 				    }
 				    else {
-					memcpy(ddmmyy, dst, 16);
+					sz_timestamp = 16;
+					memcpy(ddmmyy, dst, sz_timestamp);
+					ddmmyy[sz_timestamp] = 0;
 				    }
 				    fprintf(stdout, "%s\n", ddmmyy);
 				    memset(ddmmyy, 0, sizeof(ddmmyy));
@@ -385,10 +398,14 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 						(0x6d61u == AntePostMeridiemValue) ||
 						(0x6d70u == AntePostMeridiemValue)
 					   ) {
-					    memcpy(ddmmyy, dst, 16);
+					    sz_timestamp = 16;
+					    memcpy(ddmmyy, dst, sz_timestamp);
+					    ddmmyy[sz_timestamp] = 0;
 					}
 					else {
-					    memcpy(ddmmyy, dst, 17);
+					    sz_timestamp = 17;
+					    memcpy(ddmmyy, dst, sz_timestamp);
+					    ddmmyy[sz_timestamp] = 0;
 					}
 					fprintf(stdout, "%s\n", ddmmyy);
 					memset(ddmmyy, 0, sizeof(ddmmyy));
