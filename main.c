@@ -239,6 +239,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 
 */
 	dst = dstbuf;
+	setenv("TZ", "EST-5:00:00", 1); /* sets the timezone for the timestamp data in the chat */
 	int64_t sec = 0;
 	int64_t tmin = 0;
 	int64_t hour = 0;
@@ -250,6 +251,8 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 	uint8_t sz_timestamp = 0;
 	void *vptr = NULL;
 	char *endptr = NULL;
+	struct tm timestamp = {};
+	struct tm * const tp = &timestamp;
 	char unsigned mmddyy[32];
 	memset(mmddyy, 0, sizeof(mmddyy));
 	for (int i = 0; i != len_txt; ++i, ++dst) {
@@ -382,6 +385,14 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				if (!((hour >= 0) && (hour < 24))) {
 				    goto err_hour_timestamp;
 				}
+
+				tp->tm_sec = sec;
+				tp->tm_min = tmin;
+				tp->tm_hour = hour;
+				tp->tm_mday = mday;
+				tp->tm_mon = mon;
+				tp->tm_year = year;
+				tp->tm_isdst = isdst;
 
 				uint16_t const AntePostMeridiemValue = ((dst[13] << 8) | dst[12]);
 				if (
@@ -528,6 +539,14 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    if (!((hour >= 0) && (hour < 24))) {
 					goto err_hour_timestamp;
 				    }
+
+				    tp->tm_sec = sec;
+				    tp->tm_min = tmin;
+				    tp->tm_hour = hour;
+				    tp->tm_mday = mday;
+				    tp->tm_mon = mon;
+				    tp->tm_year = year;
+				    tp->tm_isdst = isdst;
 
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
 				    if (
@@ -680,6 +699,14 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					goto err_hour_timestamp;
 				    }
 
+				    tp->tm_sec = sec;
+				    tp->tm_min = tmin;
+				    tp->tm_hour = hour;
+				    tp->tm_mday = mday;
+				    tp->tm_mon = mon;
+				    tp->tm_year = year;
+				    tp->tm_isdst = isdst;
+
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
@@ -824,6 +851,14 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					if (!((hour >= 0) && (hour < 24))) {
 					    goto err_hour_timestamp;
 					}
+
+					tp->tm_sec = sec;
+					tp->tm_min = tmin;
+					tp->tm_hour = hour;
+					tp->tm_mday = mday;
+					tp->tm_mon = mon;
+					tp->tm_year = year;
+					tp->tm_isdst = isdst;
 
 					uint16_t const AntePostMeridiemValue = ((dst[15] << 8) | dst[14]);
 					if (
