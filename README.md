@@ -16,10 +16,10 @@ This section is devoted to log the development of this application to keep a com
 
 Quick access to the development logs:
 
-- [Day 1](#day-1)
-- [Day 2](#day-2)
-- [Day 3](#day-3)
-- [Day 4](#day-4)
+- [Day 1: Exploring Unicode](#day-1)
+- [Day 2: Unicode to ASCII Transliteration](#day-2)
+- [Day 3: Tranliteration Portability](#day-3)
+- [Day 4: Exploring Timestamp Encodings](#day-4)
 
 
 ### Day 1
