@@ -133,9 +133,7 @@ The advantages of the timestamp encoding solution are outlined here:
 #### Testing
 I also experimented with using simple conditionals instead of regular expressions (regex) for locating the timestamps in the chat. The choice for simple logic has been favored over regex because it allows me to establish a baseline for benchmarking if the code ever needs regex down the road.  Another reason for sticking with simple logic is that we can look at the underlying patterns (or code execution branches) that the regex would take.  It is also probable that even with a regex we will need additional logic to handle the construction of the helper time structure `struct tm` for handling hours. Note that the time struct expects hours in the (exclusive) range from 0 to 24; whereas, the WhatsApp chat provides hours in the (inclusive) range from 0 to 12 (AM | PM).
 
-The experimental version of the timestamp locator code has been committed to commit [f6eb650](
-https://github.com/misael-diaz/ChatParser/commit/f6eb650895e8ebb0d2f0a59e1cfaa0e17a600e0b 
-). Testing has confirmed that it can detect typical timestamps from WhatsApp Business chats.
+The experimental version of the timestamp locator code has been committed to commit [f6eb650]( https://github.com/misael-diaz/ChatParser/commit/f6eb650895e8ebb0d2f0a59e1cfaa0e17a600e0b ). Testing has confirmed that it can detect typical timestamps from WhatsApp Business chats.
 
 #### Conclusions
 It is reassuring to find out that Chromium's JavaScript [V8 engine](https://github.com/v8/v8/blob/bd3ed01527c850cd5268fb11ecd4cc9576333d5c/src/base/platform/platform-cygwin.cc#L86)&mdash;the engine that powers the most popular browsers&mdash;reaches out for the same system time utilities that I used for handling timezone offsets.
