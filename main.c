@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #define BOM_UTF8 0x00bfbbefu
 
@@ -207,5 +208,37 @@ int main()
 	}
 	fprintf(stdout, "%s", (char*) dstbuf);
 #endif
+/*
+
+EXPERIMENTAL TIMESTAMPS CODE:
+
+The following experimental code is going to be removed in a future commit since this is just for verification.
+
+The experimental code gives us the idea of what the chat-parser should do with timestamps:
+construct a `struct tm` -> mktime() -> time_t (64-bit integer) representating the number of seconds since
+the Unix Epoch.
+
+The advantage of doing this is that the math is simple, sorting is also simple, and the
+time data is unambiguous regardless of the location where the database is hosted.
+
+Key points here, setting isdst to zero, meaning no daylight savings, and this makes sense for my use case.
+The other point is to set the timezone before calling `mktime` so that system timezone won't interfere
+with the timestamps. This matters when the system timezone does not match the timezone of the chats,
+and this is my case.
+
+*/
+	struct tm t = {};
+	t.tm_sec = 18;
+	t.tm_min = 18;
+	t.tm_hour = 18;
+	t.tm_mday = 4;
+	t.tm_mon = 4;
+	t.tm_year = 2026 - 1900;
+	t.tm_isdst = 0;
+	setenv("TZ", "EST-5:00:00", 1);
+	int64_t time = mktime(&t);
+	fprintf(stdout, "%s\n", *tzname);
+	fprintf(stdout, "%s\n", getenv("TZ"));
+	fprintf(stdout, "secs: %ld\n", time);
 	return 0;
 }
