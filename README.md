@@ -115,6 +115,7 @@ Laid out a plan to handle missing timezone data from the WhatsApp chat timestamp
 
 
 **Advantages**
+
 The advantages of the timestamp encoding solution are outlined here:
 
 - **Storage**: Storing the timestamps as 64-bit integers in the database is efficient, it is preferable to storing them as a string which could introduce interpretation errors down the rode. One also has to consider that if the timestamp is stored as a string one needs to include the timezone data as well.
