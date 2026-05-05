@@ -123,18 +123,18 @@ https://github.com/misael-diaz/ChatParser/commit/acd6f4c08dee4e2144c35de10091819
 The advantages of the timestamp encoding solution are outlined here:
 
 - **Storage**: Storing the timestamps as 64-bit integers in the database is efficient, it is preferable to storing them as a string which could introduce interpretation errors down the rode. One also has to consider that if the timestamp is stored as a string one needs to include the timezone data as well.
-- **Sorting**: Querying the database with respect time often involves sorting and that means that the cost of sorting is tied to the number of operations needed to compare timestamps. From an algorithmic standpoint, it is clear that comparing integers is faster than comparing strings.
+- **Sorting**: Querying the database with respect to time often involves sorting and that means that the cost of sorting is tied to the number of operations needed to compare timestamps. From an algorithmic standpoint, it is clear that comparing integers is faster than comparing strings.
 - **Duplicate Timestamps**: Timestamp duplicates are quite common in WhatsApp chat messages because
 WhatsApp exports chats with timestamps with a resolution of minutes.
 To differentiate them all that we need to do is to add a suitable time-interval (seconds) between them.
-An ellaborate solution would be to estimate the time it takes to write the text based on the number of
+An elaborate solution would be to estimate the time it takes to write the text based on the number of
 characters but a simple constant addition will do for practical purposes.
 
 #### Considerations
-- Need to take into account how SQLite handle timestamps given as 64-bit integers. This involves
+- Need to take into account how SQLite handles timestamps given as 64-bit integers. This involves
 reading SQLite's documentation.
 - Address probable edge cases not yet considered in this exploratory phase. For example, what if in the
-future a client wants a web-based dashboard application. Would we need an API that would handle the edge cases to keep the frontend code strictly for presenting the content, rather than to deal with data processing. 
+future a client wants a web-based dashboard application. Would we need an API that would handle the edge cases to keep the frontend code strictly for presenting the content, rather than to deal with data processing?
 
 #### Conclusions
 It is reassuring to find out that Chromium's JavaScript [V8 engine](https://github.com/v8/v8/blob/bd3ed01527c850cd5268fb11ecd4cc9576333d5c/src/base/platform/platform-cygwin.cc#L86)&mdash;the engine that powers the most popular browsers&mdash;reaches out for the same system time utilities that I used for handling timezone offsets.
