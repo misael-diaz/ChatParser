@@ -109,7 +109,7 @@ int main()
 		fprintf(stderr, "%s", "error: unsupported utf-16\n");
 		_exit(1);
 	}
-	/* excludes emojis and other non-ASCII characters from the chat */
+	// excludes emojis and other non-ASCII characters from the chat
 	while (len_chat > count) {
 		if (0x80u > (*txt)) {
 			if (((*txt) < 0x0au)) {
@@ -229,23 +229,20 @@ int main()
 	}
 	fprintf(stdout, "%s", (char*) dstbuf);
 
-/*
+//EXPERIMENTAL TIMESTAMP DETECTION CODE
+//
+//- uses simple conditionals to locate timestamps
+//- need to set the struct tm according to the AM and PM cases
+//- for the time being the timestamp is shown on the console for verification
+//- consider checking for the hyphen `-` as well
+//- consider checking for the newline character preceeding the timestamp or the first-character in the buffer
+//- consider using a regex in the future to account for the presence of the username followed by a colon `:`
+//  to make it less likely to confuse the timestamp with the chat text
+//- of course there's a certain degree of repetition that could be taken into account for refactoring but
+//  right now this is exploratory code and I am fine with repetition
 
-EXPERIMENTAL TIMESTAMP DETECTION CODE
-
-- uses simple conditionals to locate timestamps
-- need to set the struct tm according to the AM and PM cases
-- for the time being the timestamp is shown on the console for verification
-- consider checking for the hyphen `-` as well
-- consider checking for the newline character preceeding the timestamp or the first-character in the buffer
-- consider using a regex in the future to account for the presence of the username followed by a colon `:`
-  to make it less likely to confuse the timestamp with the chat text
-- of course there's a certain degree of repetition that could be taken into account for refactoring but
-  right now this is exploratory code and I am fine with repetition
-
-*/
 	dst = dstbuf;
-	setenv("TZ", "EST-5:00:00", 1); /* sets the timezone for the timestamp data in the chat */
+	setenv("TZ", "EST-5:00:00", 1); // sets the timezone for the timestamp data in the chat
 	int64_t sec = 0;
 	int64_t tmin = 0;
 	int64_t hour = 0;
@@ -972,7 +969,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 	    }
 	}
 
-	/* checks the chat mapping array (timestamp, userid, and message) */
+	// checks the chat mapping array (timestamp, userid, and message)
 	fprintf(stdout, "timestamps: %lu\n", timestamps);
 	map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
 	for (uint32_t i = 0; i != timestamps; ++i, ++map) {
@@ -985,25 +982,23 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 			fprintf(stdout, "%s", "would overrun timestamp placeholder\n");
 		}
 	}
-/*
 
-EXPERIMENTAL TIMESTAMPS CODE:
+//EXPERIMENTAL TIMESTAMPS CODE:
+//
+//The following experimental code is going to be removed in a future commit since this is just for verification.
+//
+//The experimental code gives us the idea of what the chat-parser should do with timestamps:
+//construct a `struct tm` -> mktime() -> time_t (64-bit integer) representating the number of seconds since
+//the Unix Epoch.
+//
+//The advantage of doing this is that the math is simple, sorting is also simple, and the
+//time data is unambiguous regardless of the location where the database is hosted.
+//
+//Key points here, setting isdst to zero, meaning no daylight savings, and this makes sense for my use case.
+//The other point is to set the timezone before calling `mktime` so that system timezone won't interfere
+//with the timestamps. This matters when the system timezone does not match the timezone of the chats,
+//and this is my case.
 
-The following experimental code is going to be removed in a future commit since this is just for verification.
-
-The experimental code gives us the idea of what the chat-parser should do with timestamps:
-construct a `struct tm` -> mktime() -> time_t (64-bit integer) representating the number of seconds since
-the Unix Epoch.
-
-The advantage of doing this is that the math is simple, sorting is also simple, and the
-time data is unambiguous regardless of the location where the database is hosted.
-
-Key points here, setting isdst to zero, meaning no daylight savings, and this makes sense for my use case.
-The other point is to set the timezone before calling `mktime` so that system timezone won't interfere
-with the timestamps. This matters when the system timezone does not match the timezone of the chats,
-and this is my case.
-
-*/
 	struct tm t = {};
 	t.tm_sec = 18;
 	t.tm_min = 18;
@@ -1065,13 +1060,11 @@ err_min_timestamp:
 	    _exit(1);
 	}
 err_encoding_timestamp:
-/*
 
-NOTE:
-mktime() sets the errno but that alone won't suffice to know if it failed, this is why we have to check the
-returned value and then maybe look at the errno for more info for completeness.
+//NOTE:
+//mktime() sets the errno but that alone won't suffice to know if it failed, this is why we have to check the
+//returned value and then maybe look at the errno for more info for completeness.
 
-*/
 	{
 	    fprintf(stderr, "error on: %s:%d\n", __FILE__, lineno);
 	    fprintf(stderr, "%s", "error: invalid time value passed to mktime util\n");
