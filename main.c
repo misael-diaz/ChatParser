@@ -12,6 +12,12 @@
 
 #define BOM_UTF8 0x00bfbbefu
 
+// TODO: add offsets and size for the userid and message data
+struct mapping {
+	uint64_t offset_timestamp;
+	uint64_t size_timestamp;
+};
+
 int main()
 {
 	errno = 0;
@@ -248,12 +254,16 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 	int64_t year = 0;
 	int64_t encoded_time = 0;
 	int64_t const isdst = 0;
+	uint64_t timestamps = 0;
 	uint32_t lineno = 0;
 	uint8_t sz_timestamp = 0;
 	void *vptr = NULL;
 	char *endptr = NULL;
+	char *nl = NULL;
+	char *dm = NULL;
 	struct tm timestamp = {};
 	struct tm * const tp = &timestamp;
+	struct mapping *map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
 	char unsigned mmddyy[32];
 	memset(mmddyy, 0, sizeof(mmddyy));
 	for (int i = 0; i != len_txt; ++i, ++dst) {
@@ -400,6 +410,18 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				encoded_time = mktime(tp);
 				if (errno) {
 					goto err_encoding_timestamp;
+				}
+
+				vptr = dst;
+				nl = strstr(vptr, "\n");
+				dm = strstr(vptr, "-");
+				if (nl && dm) {
+					if (dm < nl) {
+						map->offset_timestamp = (vptr - dstbuf);
+						map->size_timestamp = (((void*) dm) - vptr);
+						++timestamps;
+						++map;
+					}
 				}
 
 				uint16_t const AntePostMeridiemValue = ((dst[13] << 8) | dst[12]);
@@ -561,6 +583,18 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    encoded_time = mktime(tp);
 				    if (-1 == encoded_time) {
 					    goto err_encoding_timestamp;
+				    }
+
+				    vptr = dst;
+				    nl = strstr(vptr, "\n");
+				    dm = strstr(vptr, "-");
+				    if (nl && dm) {
+					    if (dm < nl) {
+						    map->offset_timestamp = (vptr - dstbuf);
+						    map->size_timestamp = (((void*) dm) - vptr);
+						    ++timestamps;
+						    ++map;
+					    }
 				    }
 
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
@@ -729,6 +763,18 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    goto err_encoding_timestamp;
 				    }
 
+				    vptr = dst;
+				    nl = strstr(vptr, "\n");
+				    dm = strstr(vptr, "-");
+				    if (nl && dm) {
+					    if (dm < nl) {
+						    map->offset_timestamp = (vptr - dstbuf);
+						    map->size_timestamp = (((void*) dm) - vptr);
+						    ++timestamps;
+						    ++map;
+					    }
+				    }
+
 				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
@@ -889,6 +935,18 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 						goto err_encoding_timestamp;
 					}
 
+					vptr = dst;
+					nl = strstr(vptr, "\n");
+					dm = strstr(vptr, "-");
+					if (nl && dm) {
+						if (dm < nl) {
+							map->offset_timestamp = (vptr - dstbuf);
+							map->size_timestamp = (((void*) dm) - vptr);
+							++timestamps;
+							++map;
+						}
+					}
+
 					uint16_t const AntePostMeridiemValue = ((dst[15] << 8) | dst[14]);
 					if (
 						(0x6d61u == AntePostMeridiemValue) ||
@@ -912,6 +970,20 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 		    }
 		}
 	    }
+	}
+
+	/* checks the chat mapping array (timestamp, userid, and message) */
+	fprintf(stdout, "timestamps: %lu\n", timestamps);
+	map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
+	for (uint32_t i = 0; i != timestamps; ++i, ++map) {
+		if (sizeof(mmddyy) > map->size_timestamp) {
+			memset(mmddyy, 0, sizeof(mmddyy));
+			memcpy(mmddyy, dstbuf + map->offset_timestamp, map->size_timestamp);
+			fprintf(stdout, "%s\n", mmddyy);
+		}
+		else {
+			fprintf(stdout, "%s", "would overrun timestamp placeholder\n");
+		}
 	}
 /*
 
