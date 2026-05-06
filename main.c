@@ -295,7 +295,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				else if ((!*endptr) || ('/' != endptr[0])) {
 				    goto err_uxchar_timestamp;
 				}
-				else if (1 != (endptr - ((char*) vptr))) {
+				else if (1 != (((void*) endptr) - vptr)) {
 				    goto err_uxlen_timestamp;
 				}
 				else if (!(mon >= 0 && mon < 12)) {
@@ -313,7 +313,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				else if ((!*endptr) || ('/' != endptr[0])) {
 				    goto err_uxchar_timestamp;
 				}
-				else if (1 != (endptr - ((char*) vptr))) {
+				else if (1 != (((void*) endptr) - vptr)) {
 				    goto err_uxlen_timestamp;
 				}
 				else if (!((mday >= 1) && (mday < 32))) {
@@ -331,7 +331,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				else if ((!*endptr) || (',' != endptr[0])) {
 				    goto err_uxchar_timestamp;
 				}
-				else if (2 != (endptr - ((char*) vptr))) {
+				else if (2 != (((void*) endptr) - vptr)) {
 				    goto err_uxlen_timestamp;
 				}
 				else if (!((year >= (2026 - 1900)) && (year < (2038 - 1900)))) {
@@ -350,8 +350,8 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    goto err_uxchar_timestamp;
 				}
 				else if (
-					(1 != (endptr - ((char*) vptr))) &&
-					(2 != (endptr - ((char*) vptr)))
+					(1 != (((void*) endptr) - vptr)) &&
+					(2 != (((void*) endptr) - vptr))
 					) {
 				    goto err_uxlen_timestamp;
 				}
@@ -371,8 +371,8 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    goto err_uxchar_timestamp;
 				}
 				else if (
-					(1 != (endptr - ((char*) vptr))) &&
-					(2 != (endptr - ((char*) vptr)))
+					(1 != (((void*) endptr) - vptr)) &&
+					(2 != (((void*) endptr) - vptr))
 					) {
 				    goto err_uxlen_timestamp;
 				}
@@ -456,7 +456,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    else if ((!*endptr) || ('/' != endptr[0])) {
 					goto err_uxchar_timestamp;
 				    }
-				    else if (1 != (endptr - ((char*) vptr))) {
+				    else if (1 != (((void*) endptr) - vptr)) {
 					goto err_uxlen_timestamp;
 				    }
 				    else if (!(mon >= 0 && mon < 12)) {
@@ -474,7 +474,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    else if ((!*endptr) || ('/' != endptr[0])) {
 					goto err_uxchar_timestamp;
 				    }
-				    else if (1 != (endptr - ((char*) vptr))) {
+				    else if (1 != (((void*) endptr) - vptr)) {
 					goto err_uxlen_timestamp;
 				    }
 				    else if (!((mday >= 1) && (mday < 32))) {
@@ -492,7 +492,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    else if ((!*endptr) || (',' != endptr[0])) {
 					goto err_uxchar_timestamp;
 				    }
-				    else if (2 != (endptr - ((char*) vptr))) {
+				    else if (2 != (((void*) endptr) - vptr)) {
 					goto err_uxlen_timestamp;
 				    }
 				    else if (!((year >= (2026 - 1900)) && (year < (2038 - 1900)))) {
@@ -511,8 +511,8 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					goto err_uxchar_timestamp;
 				    }
 				    else if (
-					    (1 != (endptr - ((char*) vptr))) &&
-					    (2 != (endptr - ((char*) vptr)))
+					    (1 != (((void*) endptr) - vptr)) &&
+					    (2 != (((void*) endptr) - vptr))
 					    ) {
 					goto err_uxlen_timestamp;
 				    }
@@ -532,8 +532,8 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					goto err_uxchar_timestamp;
 				    }
 				    else if (
-					    (1 != (endptr - ((char*) vptr))) &&
-					    (2 != (endptr - ((char*) vptr)))
+					    (1 != (((void*) endptr) - vptr)) &&
+					    (2 != (((void*) endptr) - vptr))
 					    ) {
 					goto err_uxlen_timestamp;
 				    }
@@ -622,7 +622,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    else if ((!*endptr) || ('/' != endptr[0])) {
 					goto err_uxchar_timestamp;
 				    }
-				    else if (2 != (endptr - ((char*) vptr))) {
+				    else if (2 != (((void*) endptr) - vptr)) {
 					goto err_uxlen_timestamp;
 				    }
 				    else if (!(mon >= 0 && mon < 12)) {
@@ -640,7 +640,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    else if ((!*endptr) || ('/' != endptr[0])) {
 					goto err_uxchar_timestamp;
 				    }
-				    else if (1 != (endptr - ((char*) vptr))) {
+				    else if (1 != (((void*) endptr) - vptr)) {
 					goto err_uxlen_timestamp;
 				    }
 				    else if (!((mday >= 1) && (mday < 32))) {
@@ -658,7 +658,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 				    else if ((!*endptr) || (',' != endptr[0])) {
 					goto err_uxchar_timestamp;
 				    }
-				    else if (2 != (endptr - ((char*) vptr))) {
+				    else if (2 != (((void*) endptr) - vptr)) {
 					goto err_uxlen_timestamp;
 				    }
 				    else if (!((year >= (2026 - 1900)) && year < (2038 - 1900))) {
@@ -677,8 +677,8 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					goto err_uxchar_timestamp;
 				    }
 				    else if (
-					    (1 != (endptr - ((char*) vptr))) &&
-					    (2 != (endptr - ((char*) vptr)))
+					    (1 != (((void*) endptr) - vptr)) &&
+					    (2 != (((void*) endptr) - vptr))
 					    ) {
 					goto err_uxlen_timestamp;
 				    }
@@ -698,8 +698,8 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					goto err_uxchar_timestamp;
 				    }
 				    else if (
-					    (1 != (endptr - ((char*) vptr))) &&
-					    (2 != (endptr - ((char*) vptr)))
+					    (1 != (((void*) endptr) - vptr)) &&
+					    (2 != (((void*) endptr) - vptr))
 					    ) {
 					goto err_uxlen_timestamp;
 				    }
@@ -782,7 +782,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					else if ((!*endptr) || ('/' != endptr[0])) {
 					    goto err_uxchar_timestamp;
 					}
-					else if (2 != (endptr - ((char*) vptr))) {
+					else if (2 != (((void*) endptr) - vptr)) {
 					    goto err_uxlen_timestamp;
 					}
 					else if (!(mon >= 0 && mon < 12)) {
@@ -800,7 +800,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					else if ((!*endptr) || ('/' != endptr[0])) {
 					    goto err_uxchar_timestamp;
 					}
-					else if (2 != (endptr - ((char*) vptr))) {
+					else if (2 != (((void*) endptr) - vptr)) {
 					    goto err_uxlen_timestamp;
 					}
 					else if (!((mday >= 1) && (mday < 32))) {
@@ -818,7 +818,7 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					else if ((!*endptr) || (',' != endptr[0])) {
 					    goto err_uxchar_timestamp;
 					}
-					else if (2 != (endptr - ((char*) vptr))) {
+					else if (2 != (((void*) endptr) - vptr)) {
 					    goto err_uxlen_timestamp;
 					}
 					else if (!((year >= (2026 - 1900)) && year < (2038 - 1900))) {
@@ -837,8 +837,8 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    goto err_uxchar_timestamp;
 					}
 					else if (
-						(1 != (endptr - ((char*) vptr))) &&
-						(2 != (endptr - ((char*) vptr)))
+						(1 != (((void*) endptr) - vptr)) &&
+						(2 != (((void*) endptr) - vptr))
 						) {
 					    goto err_uxlen_timestamp;
 					}
@@ -858,8 +858,8 @@ EXPERIMENTAL TIMESTAMP DETECTION CODE
 					    goto err_uxchar_timestamp;
 					}
 					else if (
-						(1 != (endptr - ((char*) vptr))) &&
-						(2 != (endptr - ((char*) vptr)))
+						(1 != (((void*) endptr) - vptr)) &&
+						(2 != (((void*) endptr) - vptr))
 						) {
 					    goto err_uxlen_timestamp;
 					}
