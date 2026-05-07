@@ -156,7 +156,7 @@ The clear goal of the day was to start working on the mapping of the timestamps 
 
 #### Lessons Learned
 
-- **Advantages of K&R Coding Conventions**: By not cuddling an `else` or `else if` next to closing braces I was able to write the code with more ease than by following the opposite convention. Programming style is something that evolves and is cemented with practice. So I learned by this by experimenting with both and now I have decided to use the K&R style for this one.
+- **Advantages of K&R Coding Conventions**: By not cuddling an `else` or `else if` next to closing braces I was able to write the code with more ease than by following the opposite convention. Programming style is something that evolves and is cemented with practice. So I learned this by experimenting with both and now I have decided to use the K&R style for this one.
 
 
 - **Refactoring**: Even though I saw opportunities to refactor the code that I was working on, I reaffirmed that it is best to postpone that until the repetition becomes a fingerprint of the underlying logic. This is why there are no functions defined at this point.
@@ -167,7 +167,7 @@ The clear goal of the day was to start working on the mapping of the timestamps 
 
 #### Achievements
 
-- **Mapped Chat Timestamps**: Spatial mapping of timestamps from the base address pointer. This is so that we can contruct the message text and the user id more easily in another codeblock. Doing more would make it harder to maintain the code, we can afford to the other mappings in a separate loop.
+- **Mapped Chat Timestamps**: Spatial mapping of timestamps from the base address pointer. This is so that we can construct the message text and the user id more easily in another codeblock. Doing more would make it harder to maintain the code, so we can afford to do the other data mappings (chat content and userid) in separate loops.
 
 
 - **Encoded Timestamps**: Encoding the timestamp in a 64-bit integer that represents the elapsed number of seconds since the Unix Epoch. The encoding takes into account the timezone of the chat data. This means that we have succeeded in implementing a timezone agnostic representation of the timestamps. So it won't matter if the database is hosted in Alaska or anywhere else, timezones won't be a problem.
