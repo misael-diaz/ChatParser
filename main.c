@@ -107,8 +107,10 @@ int main(int argc, char *argv[])
 	} while (rc);
 
 	uint64_t len_chat = bytes_read;
+#if DEVBUILD
 	fprintf(stdout, "chat-length (bytes): %lu\n", len_chat);
 	fprintf(stdout, "mmap-size (bytes): %lu\n", len_mmap);
+#endif
 
 	errno = 0;
 	void *srcbuf = buff;
@@ -229,10 +231,12 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%s", "error: bytes read and filesize mismatch\n");
 		_exit(1);
 	}
+#if DEVBUILD
 	else {
 		fprintf(stdout, "%s %lu %s", "bytes-read:", count, "\n");
 		fprintf(stdout, "%s %lu %s", "bytes-kept:", len_txt, "\n");
 	}
+#endif
 
 	if (-1 == (rc = munmap(srcbuf, len_mmap))) {
 		fprintf(stderr, "%s", "error: unmapping chat failed\n");
