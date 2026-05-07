@@ -20,6 +20,8 @@ Quick access to the development logs:
 - [Day 2: Unicode to ASCII Transliteration](#day-2)
 - [Day 3: Transliterator Portability](#day-3)
 - [Day 4: Exploring Timestamp Encodings](#day-4)
+- [Day 5: Timestamp Spatial Mapping](#day-5)
+- [Day 6: Forging a Unix Filter](#day-6)
 
 
 ### Day 1
@@ -148,3 +150,61 @@ The experimental version of the timestamp locator code has been committed to com
 
 #### Conclusions
 It is reassuring to find out that Chromium's JavaScript [V8 engine](https://github.com/v8/v8/blob/bd3ed01527c850cd5268fb11ecd4cc9576333d5c/src/base/platform/platform-cygwin.cc#L86)&mdash;the engine that powers the most popular browsers&mdash;reaches out for the same system time utilities that I used for handling timezone offsets.
+
+### Day 5
+The clear goal of the day was to start working on the mapping of the timestamps as offsets with respect to the base address of the output data (the ASCII that results from transliterating Unicode).
+
+#### Lessons Learned
+
+- **Advantages of K&R Coding Conventions**: By not cuddling an `else` or `else if` next to closing braces I was able to write the code with more ease than by following the opposite convention. Programming style is something that evolves and is cemented with practice. So I learned this by experimenting with both and now I have decided to use the K&R style for this one.
+
+
+- **Refactoring**: Even though I saw opportunities to refactor the code that I was working on, I reaffirmed that it is best to postpone that until the repetition becomes a fingerprint of the underlying logic. This is why there are no functions defined at this point.
+
+
+- **Handling mktime() Errors**: Even if [`errno`](https://man7.org/linux/man-pages/man3/errno.3.html) is set during a call to [`mktime()`](https://man7.org/linux/man-pages/man3/errno.3.html) that alone does not necessarily means that it failed to encode the time into a 64-bit integer. Only when `mktime()` returns `-1` there's an error that we should be wary of.
+
+
+#### Achievements
+
+- **Mapped Chat Timestamps**: Spatial mapping of timestamps from the base address pointer. This is so that we can construct the message text and the user id more easily in another codeblock. Doing more would make it harder to maintain the code, so we can afford to do the other data mappings (chat content and userid) in separate loops.
+
+
+- **Encoded Timestamps**: Encoding the timestamp in a 64-bit integer that represents the elapsed number of seconds since the Unix Epoch. The encoding takes into account the timezone of the chat data. This means that we have succeeded in implementing a timezone agnostic representation of the timestamps. So it won't matter if the database is hosted in Alaska or anywhere else, timezones won't be a problem.
+
+
+#### Testing
+
+We verified that omitting the [`tzset()`](https://man7.org/linux/man-pages/man3/tzset.3.html) changes the encoding values for the timestamps.
+
+
+### Day 6
+
+It was not intentional but my research and curiosity drove me to make the tool useful for scripting and automation tools. The fact that the chat data was hardcoded into a file in the current working directory bothered me&mdash;this is not how Unix tools empowers my computing experience. So I decided to experiment with the idea of high-performance IO when reading from a pipe (a high-performance Unix filter). The problem is that we don't know ahead of time how large the map should be, so the solution was to let it grow as needed as a C++'s standard vector. The hint came from Quake's engine source code, for the idSoftware developers used [`mremap()`](https://github.com/id-Software/Quake-2/blob/372afde46e7defc9dd2d719a1732b8ace1fa096e/linux/q_shlinux.c#L52) to resize the virtual address space for the legendary First Person Shooter (FPS) game when running on Linux. 
+
+#### Lessons Learned
+
+Main lessons learned while forging the code into a Unix filter.
+
+- Learned that [`mremap()`](https://man7.org/linux/man-pages/man2/mremap.2.html) is very efficient at growing the virtual address space, and if we are clever enough to use offsets instead of pointers we can let the Linux Kernel shift it somewhere else so that the resulting memory section that we get is contiguous. Of course I used offsets so that if the base address changes my code does not crash. When the Linux Kernel moves the map elsewhere it does so efficiently without incurring on copying the data, this is why this is a zero-copy reallocator.
+
+- Rewrote some clever hacks into boring code to make sure that the debugging experience is better. For example, calling a function, doing assignment, and checking for the return value in an if-expression is a clever hack that should be avoided. It is better to call the function before checking the value in an if-expression. This sounds simple but writing production code sometimes mean writing code defensively and write it for the next developer
+(which can be me in a couple of months).
+- Must check that `argc` is greater or equal to one even if on Linux that `argv[0]` holds the name of the executable because there are edge cases. For example, in Linux it is allowed to call [`execve()`](https://man7.org/linux/man-pages/man2/execve.2.html) with `argv[]` set to `NULL`.
+
+
+- Learned that [`lseek()`](https://man7.org/linux/man-pages/man2/lseek.2.html) can be used to make sure that we are dealing with a pipe (not seekable devices). And that this is the ultimate check, though it is also useful to check for the file status mode. Both approaches are used in the code for robustness.
+
+#### Achievements
+
+- Forged the code so that it behaves as a Unix filter, which is the most probable use for this utility.
+
+- Used [`read()`](https://man7.org/linux/man-pages/man2/read.2.html) and [`write()`](https://man7.org/linux/man-pages/man2/write.2.html) calls for initializing the memory map that holds the Unicode text and for outputting the transliterated ASCII text to the console. On Linux this is as fast as one can do synchronous IO operations.
+
+- Separates the experimental code from the filtering code to make it easier to use for scripts and automation tools. The experimental code is too verbose and interferes with the output and that is not desirable.
+
+- Allocating an extra page serves the purpose of making the text data being interpreted as a string by functions that expect the null character `\0` such as the `fprintf` family of functions. It also provides space for experimenting with the spatial mapping of the chat data, which is relevant for ingesting the data into SQLite.
+
+#### Testing
+
+Chat files larger than the initial map size were used to check that virtual address doubles as needed.
