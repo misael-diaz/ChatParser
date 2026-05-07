@@ -25,6 +25,10 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%s", "surprising command-line error (argc !> 0)\n");
 		_exit(1);
 	}
+	else if ((NULL == argv) || (NULL == *argv) || (0 == (**argv))) {
+		fprintf(stderr, "%s", "surprising command-line error (invalid argv)\n");
+		_exit(1);
+	}
 
 	int64_t rc = 0;
 	struct stat st = {};
