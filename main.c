@@ -204,40 +204,60 @@ int main(int argc, char *argv[])
 			uint16_t const value = ((txt[1] << 8) | txt[0]);
 			if ((value >= 0x80c3u) && (value < 0x86c3u)) {
 				*dst = 'a';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value >= 0x88c3u) && (value < 0x8cc3u)) {
 				*dst = 'e';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value >= 0x8cc3u) && (value < 0x90c3u)) {
 				*dst = 'i';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value >= 0x92c3u) && (value < 0x97c3u)) {
 				*dst = 'o';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value >= 0x99c3u) && (value < 0x9ec3u)) {
 				*dst = 'u';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value >= 0xa0c3u) && (value < 0xa6c3u)) {
 				*dst = 'a';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value >= 0xa8c3u) && (value < 0xacc3u)) {
 				*dst = 'e';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value >= 0xacc3u) && (value < 0xb0c3u)) {
 				*dst = 'i';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value == 0xb1c3u)) {
 				*dst = 'n';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value >= 0xb2c3u) && (value < 0xb7c3u)) {
 				*dst = 'o';
+				dst += 1;
+				len_txt += 1;
 			}
 			else if ((value >= 0xb9c3u) && (value < 0xbdc3u)) {
 				*dst = 'u';
+				dst += 1;
+				len_txt += 1;
 			}
 			txt += 2;
-			dst += 1;
-			len_txt += 1;
 			count += 2;
 		}
 		else if (0xf0u > (*txt)) {
