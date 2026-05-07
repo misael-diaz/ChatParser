@@ -37,6 +37,22 @@ cat chat.txt | ./chat-parser.bin
 
 and here it is assumed that the chat and the util are in the current working directory.
 
+If you want to suppress warnings (due to unknown command-line arguments):
+
+```sh
+cat chat.txt | ./chat-parser.bin 2>/dev/null
+```
+
+you can redirect them to the null device, for warnings are written to the standard error stream.
+
+The only command-line argument that this tool understand is the help argument:
+
+```sh
+./chat-parser.bin --help
+```
+
+and this shows the example usage that you see in this section.
+
 ## Development Status
 
 This section is devoted to log the development of this application to keep a comprehensive history beyond what one can usually find from git-commit logs. I talk about edge cases, problems and their solutions, design and performance considerations, etc.
