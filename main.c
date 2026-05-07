@@ -263,7 +263,6 @@ int main(int argc, char *argv[])
 			_exit(1);
 		}
 	}
-	fprintf(stdout, "%s", (char*) dstbuf);
 
 //EXPERIMENTAL TIMESTAMP DETECTION CODE
 //
@@ -1049,6 +1048,7 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "%s\n", getenv("TZ"));
 	fprintf(stdout, "secs: %ld\n", time);
 #endif
+	fprintf(stdout, "%s", (char*) dstbuf);
 	return 0;
 
 #if DEVBUILD
