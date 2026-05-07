@@ -1048,7 +1048,25 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "%s\n", getenv("TZ"));
 	fprintf(stdout, "secs: %ld\n", time);
 #endif
-	fprintf(stdout, "%s", (char*) dstbuf);
+	uint64_t bytes_written = 0;
+	do {
+		errno = 0;
+		rc = write(STDOUT_FILENO, dstbuf + bytes_written, len_txt - bytes_written);
+		if (rc > 0) {
+			bytes_written += rc;
+		}
+		else if (-1 == rc) {
+			if (errno) {
+				if (EINTR != errno) {
+					fprintf(stderr, "%s\n", strerror(errno));
+					_exit(1);
+				}
+			} else {
+				fprintf(stderr, "%s", "error: unexpected output error\n");
+				_exit(1);
+			}
+		}
+	} while (bytes_written < len_txt);
 	return 0;
 
 #if DEVBUILD
