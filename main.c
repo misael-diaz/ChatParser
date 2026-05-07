@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
 			"%s %s",
 			argv[0],
 			"expects input to come from a pipe\n");
+		fprintf(stderr, "usage example: cat chat.txt | %s\n", argv[0]);
 		_exit(1);
 	}
 
@@ -49,6 +50,7 @@ int main(int argc, char *argv[])
 				"%s %s",
 				argv[0],
 				"expects input to come from a stream-like pipe (a not seekable pipe)\n");
+			fprintf(stderr, "usage example: cat chat.txt | %s\n", argv[0]);
 			_exit(1);
 		}
 	} else {
@@ -56,6 +58,7 @@ int main(int argc, char *argv[])
 			"%s %s",
 			argv[0],
 			"expects input to come from a stream-like pipe (a not seekable pipe)\n");
+		fprintf(stderr, "usage example: cat chat.txt | %s\n", argv[0]);
 		_exit(1);
 	}
 
