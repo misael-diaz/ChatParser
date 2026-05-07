@@ -297,18 +297,22 @@ int main(int argc, char *argv[])
 	for (int i = 0; i != len_txt; ++i, ++dst) {
 		if ((*dst < 0x0au)) {
 			fprintf(stderr, "%s", normerr);
+			fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
 			_exit(1);
 		}
 		else if ((*dst >= 0x0bu) && (*dst < 0x20u)) {
 			fprintf(stderr, "%s", normerr);
+			fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
 			_exit(1);
 		}
 		else if (((*dst) >= 0x41u) && ((*dst) < 0x5bu)) {
 			fprintf(stderr, "%s", folderr);
+			fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
 			_exit(1);
 		}
 		else if (*dst >= 0x7fu) {
 			fprintf(stderr, "%s", tliterr);
+			fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
 			_exit(1);
 		}
 	}
