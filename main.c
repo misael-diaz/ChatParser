@@ -191,7 +191,6 @@ int main(int argc, char *argv[])
 				*dst = 'o';
 			}
 			else if ((value >= 0x99c3u) && (value < 0x9ec3u)) {
-				fprintf(stdout, "%c", 'u');
 				*dst = 'u';
 			}
 			else if ((value >= 0xa0c3u) && (value < 0xa6c3u)) {
