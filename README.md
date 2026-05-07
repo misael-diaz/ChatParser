@@ -154,7 +154,29 @@ It is reassuring to find out that Chromium's JavaScript [V8 engine](https://gith
 ### Day 5
 The clear goal of the day was to start working on the mapping of the timestamps as offsets with respect to the base address of the output data (the ASCII that results from transliterating Unicode).
 
-TODO ADD MISSING SECTIONS
+#### Lessons Learned
+
+- **Advantages of K&R Coding Conventions**: By not cuddling an `else` or `else if` next to closing braces I was able to write the code with more ease than by following the opposite convention. Programming style is something that evolves and is cemented with practice. So I learned by this by experimenting with both and now I have decided to use the K&R style for this one.
+
+
+- **Refactoring**: Even though I saw opportunities to refactor the code that I was working on, I reaffirmed that it is best to postpone that until the repetition becomes a fingerprint of the underlying logic. This is why there are no functions defined at this point.
+
+
+- **Handling mktime() Errors**: Even if [`errno`](https://man7.org/linux/man-pages/man3/errno.3.html) is set during a call to [`mktime()`](https://man7.org/linux/man-pages/man3/errno.3.html) that alone does not necessarily means that it failed to encode the time into a 64-bit integer. Only when `mktime()` returns `-1` there's an error that we should be wary of.
+
+
+#### Achievements
+
+- **Mapped Chat Timestamps**: Spatial mapping of timestamps from the base address pointer. This is so that we can contruct the message text and the user id more easily in another codeblock. Doing more would make it harder to maintain the code, we can afford to the other mappings in a separate loop.
+
+
+- **Encoded Timestamps**: Encoding the timestamp in a 64-bit integer that represents the elapsed number of seconds since the Unix Epoch. The encoding takes into account the timezone of the chat data. This means that we have succeeded in implementing a timezone agnostic representation of the timestamps. So it won't matter if the database is hosted in Alaska or anywhere else, timezones won't be a problem.
+
+
+#### Testing
+
+We verified that omitting the [`tzset()`](https://man7.org/linux/man-pages/man3/tzset.3.html) changes the encoding values for the timestamps.
+
 
 ### Day 6
 
