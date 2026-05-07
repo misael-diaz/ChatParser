@@ -30,6 +30,25 @@ int main(int argc, char *argv[])
 		_exit(1);
 	}
 
+	int show_help = 0;
+	for (int i = 0; i != argc; ++i) {
+		if (0 == i) {
+			continue;
+		}
+
+		char const * const help = "--help";
+		if (!strncmp(help, argv[i], sizeof(help))) {
+			show_help = 1;
+		} else {
+			fprintf(stderr, "WARNING: ignoring foreign command-line argument: %s\n", argv[i]);
+		}
+	}
+
+	if (show_help) {
+		fprintf(stdout, "usage example: cat chat.txt | %s\n", argv[0]);
+		_exit(0);
+	}
+
 	int64_t rc = 0;
 	struct stat st = {};
 	rc = fstat(STDIN_FILENO, &st);
@@ -38,6 +57,7 @@ int main(int argc, char *argv[])
 			"%s %s",
 			argv[0],
 			"expects input to come from a pipe\n");
+		fprintf(stderr, "usage example: cat chat.txt | %s\n", argv[0]);
 		_exit(1);
 	}
 
@@ -49,6 +69,7 @@ int main(int argc, char *argv[])
 				"%s %s",
 				argv[0],
 				"expects input to come from a stream-like pipe (a not seekable pipe)\n");
+			fprintf(stderr, "usage example: cat chat.txt | %s\n", argv[0]);
 			_exit(1);
 		}
 	} else {
@@ -56,6 +77,7 @@ int main(int argc, char *argv[])
 			"%s %s",
 			argv[0],
 			"expects input to come from a stream-like pipe (a not seekable pipe)\n");
+		fprintf(stderr, "usage example: cat chat.txt | %s\n", argv[0]);
 		_exit(1);
 	}
 

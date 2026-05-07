@@ -10,6 +10,49 @@ So this tool requires me to export the chats with my clients in plain text one b
 
 All I am going to say is that if you know the tech you can develop your own tool according to your needs, no need to wait for the sought after feature to be released by Meta. And I am not using AI to generate the code for this tool; instead I am using it to discuss edge cases and to close knowledge-gaps that I may have (not without doing the research myself for verification). This means that I am the systems architect and the builder as well of this tool. I rather have a complete understanding of the tools that my business depends on.
 
+## Compile
+
+This is a zero-dependency util that can be compiled with GCC:
+
+```sh
+gcc -O2 main.c -o chat-parser.bin
+```
+
+You may want to experiment with other optimization levels.
+
+## Run
+
+The chat-parser is a Unix filter, so converting a UTF-8 text file into ASCII is as simple as doing as piping the contents of the chat into the parser in this way:
+
+```sh
+cat chat.txt | chat-parser.bin
+```
+
+The util does not output anything else other than the transliterated text.
+Note that the util must be in your `PATH` for that to work, otherwise use:
+
+```sh
+cat chat.txt | ./chat-parser.bin
+```
+
+and here it is assumed that the chat and the util are in the current working directory.
+
+If you want to suppress warnings (due to unknown command-line arguments):
+
+```sh
+cat chat.txt | ./chat-parser.bin 2>/dev/null
+```
+
+you can redirect them to the null device, for warnings are written to the standard error stream.
+
+The only command-line argument that this tool understand is the help argument:
+
+```sh
+./chat-parser.bin --help
+```
+
+and this shows the example usage that you see in this section.
+
 ## Development Status
 
 This section is devoted to log the development of this application to keep a comprehensive history beyond what one can usually find from git-commit logs. I talk about edge cases, problems and their solutions, design and performance considerations, etc.
