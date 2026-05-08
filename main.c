@@ -383,7 +383,7 @@ int main(int argc, char *argv[])
 				vptr = &dst[0];
 				endptr = NULL;
 				lineno = (1 + (__LINE__));
-				mon = (strtol(vptr, &endptr, 0) - 1);
+				mon = (strtol(vptr, &endptr, 10) - 1);
 				if (errno) {
 				    goto err;
 				}
@@ -401,7 +401,7 @@ int main(int argc, char *argv[])
 				vptr = &dst[2];
 				endptr = NULL;
 				lineno = (1 + (__LINE__));
-				mday = strtol(vptr, &endptr, 0);
+				mday = strtol(vptr, &endptr, 10);
 				if (errno) {
 				    goto err;
 				}
@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
 				vptr = &dst[4];
 				endptr = NULL;
 				lineno = (1 + (__LINE__));
-				year = (strtol(vptr, &endptr, 0) + (2000 - 1900));
+				year = (strtol(vptr, &endptr, 10) + (2000 - 1900));
 				if (errno) {
 				    goto err;
 				}
@@ -437,7 +437,7 @@ int main(int argc, char *argv[])
 				vptr = &dst[8];
 				endptr = NULL;
 				lineno = (1 + (__LINE__));
-				hour = strtol(vptr, &endptr, 0);
+				hour = strtol(vptr, &endptr, 10);
 				if (errno) {
 				    goto err;
 				}
@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
 				vptr = (1 + endptr);
 				endptr = NULL;
 				lineno = (1 + (__LINE__));
-				tmin = strtol(vptr, &endptr, 0);
+				tmin = strtol(vptr, &endptr, 10);
 				if (errno) {
 				    goto err;
 				}
@@ -476,7 +476,7 @@ int main(int argc, char *argv[])
 				}
 
 				if ('p' == endptr[0]) {
-				    hour += 12;
+				    if (12 != hour) hour +=12;
 				}
 				if (!((hour >= 0) && (hour < 24))) {
 				    goto err_hour_timestamp;
@@ -556,7 +556,7 @@ int main(int argc, char *argv[])
 				    vptr = &dst[0];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    mon = (strtol(vptr, &endptr, 0) - 1);
+				    mon = (strtol(vptr, &endptr, 10) - 1);
 				    if (errno) {
 					goto err;
 				    }
@@ -574,7 +574,7 @@ int main(int argc, char *argv[])
 				    vptr = &dst[3];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    mday = strtol(vptr, &endptr, 0);
+				    mday = strtol(vptr, &endptr, 10);
 				    if (errno) {
 					goto err;
 				    }
@@ -592,7 +592,7 @@ int main(int argc, char *argv[])
 				    vptr = &dst[5];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    year = (strtol(vptr, &endptr, 0) + (2000 - 1900));
+				    year = (strtol(vptr, &endptr, 10) + (2000 - 1900));
 				    if (errno) {
 					goto err;
 				    }
@@ -610,7 +610,7 @@ int main(int argc, char *argv[])
 				    vptr = &dst[9];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    hour = strtol(vptr, &endptr, 0);
+				    hour = strtol(vptr, &endptr, 10);
 				    if (errno) {
 					goto err;
 				    }
@@ -631,7 +631,7 @@ int main(int argc, char *argv[])
 				    vptr = (1 + endptr);
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    tmin = strtol(vptr, &endptr, 0);
+				    tmin = strtol(vptr, &endptr, 10);
 				    if (errno) {
 					goto err;
 				    }
@@ -649,7 +649,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    if ('p' == endptr[0]) {
-					hour += 12;
+					if (12 != hour) hour +=12;
 				    }
 				    if (!((hour >= 0) && (hour < 24))) {
 					goto err_hour_timestamp;
@@ -734,7 +734,7 @@ int main(int argc, char *argv[])
 				    vptr = &dst[0];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    mon = (strtol(vptr, &endptr, 0) - 1);
+				    mon = (strtol(vptr, &endptr, 10) - 1);
 				    if (errno) {
 					goto err;
 				    }
@@ -752,7 +752,7 @@ int main(int argc, char *argv[])
 				    vptr = &dst[3];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    mday = strtol(vptr, &endptr, 0);
+				    mday = strtol(vptr, &endptr, 10);
 				    if (errno) {
 					goto err;
 				    }
@@ -770,7 +770,7 @@ int main(int argc, char *argv[])
 				    vptr = &dst[5];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    year = (strtol(vptr, &endptr, 0) + (2000 - 1900));
+				    year = (strtol(vptr, &endptr, 10) + (2000 - 1900));
 				    if (errno) {
 					goto err;
 				    }
@@ -788,7 +788,7 @@ int main(int argc, char *argv[])
 				    vptr = &dst[9];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    hour = strtol(vptr, &endptr, 0);
+				    hour = strtol(vptr, &endptr, 10);
 				    if (errno) {
 					goto err;
 				    }
@@ -809,7 +809,7 @@ int main(int argc, char *argv[])
 				    vptr = (1 + endptr);
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
-				    tmin = strtol(vptr, &endptr, 0);
+				    tmin = strtol(vptr, &endptr, 10);
 				    if (errno) {
 					goto err;
 				    }
@@ -827,7 +827,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    if ('p' == endptr[0]) {
-					hour += 12;
+					if (12 != hour) hour +=12;
 				    }
 				    if (!((hour >= 0) && (hour < 24))) {
 					goto err_hour_timestamp;
@@ -906,7 +906,7 @@ int main(int argc, char *argv[])
 					vptr = &dst[0];
 					endptr = NULL;
 					lineno = (1 + (__LINE__));
-					mon = (strtol(vptr, &endptr, 0) - 1);
+					mon = (strtol(vptr, &endptr, 10) - 1);
 					if (errno) {
 					    goto err;
 					}
@@ -924,7 +924,7 @@ int main(int argc, char *argv[])
 					vptr = &dst[3];
 					endptr = NULL;
 					lineno = (1 + (__LINE__));
-					mday = strtol(vptr, &endptr, 0);
+					mday = strtol(vptr, &endptr, 10);
 					if (errno) {
 					    goto err;
 					}
@@ -942,7 +942,7 @@ int main(int argc, char *argv[])
 					vptr = &dst[6];
 					endptr = NULL;
 					lineno = (1 + (__LINE__));
-					year = (strtol(vptr, &endptr, 0) + (2000 - 1900));
+					year = (strtol(vptr, &endptr, 10) + (2000 - 1900));
 					if (errno) {
 					    goto err;
 					}
@@ -960,7 +960,7 @@ int main(int argc, char *argv[])
 					vptr = &dst[10];
 					endptr = NULL;
 					lineno = (1 + (__LINE__));
-					hour = strtol(vptr, &endptr, 0);
+					hour = strtol(vptr, &endptr, 10);
 					if (errno) {
 					    goto err;
 					}
@@ -981,7 +981,7 @@ int main(int argc, char *argv[])
 					vptr = (1 + endptr);
 					endptr = NULL;
 					lineno = (1 + (__LINE__));
-					tmin = strtol(vptr, &endptr, 0);
+					tmin = strtol(vptr, &endptr, 10);
 					if (errno) {
 					    goto err;
 					}
@@ -999,7 +999,7 @@ int main(int argc, char *argv[])
 					}
 
 					if ('p' == endptr[0]) {
-					    hour += 12;
+					    if (12 != hour) hour +=12;
 					}
 					if (!((hour >= 0) && (hour < 24))) {
 					    goto err_hour_timestamp;
