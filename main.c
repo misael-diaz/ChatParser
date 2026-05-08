@@ -17,6 +17,10 @@
 struct mapping {
 	uint64_t offset_timestamp;
 	uint64_t size_timestamp;
+	uint64_t offset_user;
+	uint64_t size_user;
+	uint64_t offset_chat;
+	uint64_t size_chat;
 };
 
 int main(int argc, char *argv[])
@@ -524,7 +528,7 @@ int main(int argc, char *argv[])
 				    memcpy(mmddyy, dst, sz_timestamp);
 				    mmddyy[sz_timestamp] = 0;
 				}
-				fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+				fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				memset(mmddyy, 0, sizeof(mmddyy));
 			    }
 			}
@@ -571,7 +575,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    errno = 0;
-				    vptr = &dst[3];
+				    vptr = &dst[2];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    mday = strtol(vptr, &endptr, 10);
@@ -581,7 +585,7 @@ int main(int argc, char *argv[])
 				    else if ((!*endptr) || ('/' != endptr[0])) {
 					goto err_uxchar_timestamp;
 				    }
-				    else if (1 != (((void*) endptr) - vptr)) {
+				    else if (2 != (((void*) endptr) - vptr)) {
 					goto err_uxlen_timestamp;
 				    }
 				    else if (!((mday >= 1) && (mday < 32))) {
@@ -696,7 +700,7 @@ int main(int argc, char *argv[])
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
@@ -874,7 +878,7 @@ int main(int argc, char *argv[])
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
@@ -1046,7 +1050,7 @@ int main(int argc, char *argv[])
 					    memcpy(mmddyy, dst, sz_timestamp);
 					    mmddyy[sz_timestamp] = 0;
 					}
-					fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %ld:%ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+					fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 					memset(mmddyy, 0, sizeof(mmddyy));
 				    }
 				}
@@ -1057,14 +1061,62 @@ int main(int argc, char *argv[])
 	    }
 	}
 
-	// checks the chat mapping array (timestamp, userid, and message)
+	// updates the mapping array (timestamp, user, and chat messages)
 	fprintf(stdout, "timestamps: %lu\n", timestamps);
 	map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
+	char unsigned user[32];
+	char unsigned chat[64];
 	for (uint32_t i = 0; i != timestamps; ++i, ++map) {
 		if (sizeof(mmddyy) > map->size_timestamp) {
 			memset(mmddyy, 0, sizeof(mmddyy));
 			memcpy(mmddyy, dstbuf + map->offset_timestamp, map->size_timestamp);
-			fprintf(stdout, "%s\n", mmddyy);
+			void *vsep = strstr(dstbuf + map->offset_timestamp, "-");
+			if (!vsep) {
+				fprintf(stderr, "%s", "error: missing timestamp separator\n");
+				_exit(1);
+			}
+			vsep += 2;
+			char const * const messages = "messages";
+			if (!strncmp(messages, vsep, sizeof(messages))) {
+				continue;
+			}
+
+			void *vend = strstr(vsep, ":");
+			if (!vend) {
+				fprintf(stderr, "%s", "error: missing userdata\n");
+				_exit(1);
+			}
+
+			// for new contacts whatsapp does not add the : before the next timestamp
+			void *vnln = strstr(vsep, "\n");
+			if (vnln < vend) {
+				continue;
+			}
+
+			map->offset_user = (vsep - dstbuf);
+			map->size_user = (vend - vsep);
+
+			memset(user, 0, sizeof(user));
+			memcpy(user, dstbuf + map->offset_user, map->size_user);
+
+			++vend;
+			void *vnxt = NULL;
+			if ((timestamps - 1) == i) {
+				vnxt = dstbuf + (len_txt + 1);
+			} else {
+				struct mapping const * const nextmap = (map + 1);
+				vnxt = dstbuf + nextmap->offset_timestamp;
+			}
+			map->offset_chat = (vend - dstbuf);
+			map->size_chat = (vnxt - vend);
+			uint64_t const size = ((map->size_chat < sizeof(chat))
+					? map->size_chat
+					: sizeof(chat)
+			);
+			memset(chat, 0, sizeof(chat));
+			memcpy(chat, dstbuf + map->offset_chat, size);
+			chat[size - 1] = 0;
+			fprintf(stdout, "%s :: %s :: %s\n", mmddyy, user, chat);
 		}
 		else {
 			fprintf(stdout, "%s", "would overrun timestamp placeholder\n");
