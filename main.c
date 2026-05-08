@@ -571,7 +571,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    errno = 0;
-				    vptr = &dst[3];
+				    vptr = &dst[2];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    mday = strtol(vptr, &endptr, 10);
@@ -581,7 +581,7 @@ int main(int argc, char *argv[])
 				    else if ((!*endptr) || ('/' != endptr[0])) {
 					goto err_uxchar_timestamp;
 				    }
-				    else if (1 != (((void*) endptr) - vptr)) {
+				    else if (2 != (((void*) endptr) - vptr)) {
 					goto err_uxlen_timestamp;
 				    }
 				    else if (!((mday >= 1) && (mday < 32))) {
