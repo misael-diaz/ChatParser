@@ -256,7 +256,7 @@ Chat files larger than the initial map size were used to check that virtual addr
 
 ### Day 7
 
-On this day I put the Unicode to ASCII transliterator to the test by having it process a WhatsApp group chat (real conversation data in Spanish). That's when I discovered two problems with my code. Found characters less that the Feed Line (FL) and the timestamp detection logic encountered an unexpected character where AM or PM should be.
+On this day I put the Unicode to ASCII transliterator to the test by having it process a WhatsApp group chat (real conversation data in Spanish). That's when I discovered two problems with my code. Found characters less than the Feed Line (FL) and the timestamp detection logic encountered an unexpected character where AM or PM should be.
 
 
 #### Lessons Learned
