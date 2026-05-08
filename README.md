@@ -65,6 +65,7 @@ Quick access to the development logs:
 - [Day 4: Exploring Timestamp Encodings](#day-4)
 - [Day 5: Timestamp Spatial Mapping](#day-5)
 - [Day 6: Forging a Unix Filter](#day-6)
+- [Day 7: Fixes](#day-7)
 
 
 ### Day 1
@@ -251,3 +252,29 @@ Main lessons learned while forging the code into a Unix filter.
 #### Testing
 
 Chat files larger than the initial map size were used to check that virtual address doubles as needed.
+
+
+### Day 7
+
+On this day I put the Unicode to ASCII transliterator to the test by having it process a WhatsApp group chat (real conversation data in Spanish). That's when I discovered two problems with my code. Found characters less than the Feed Line (FL) and the timestamp detection logic encountered an unexpected character where AM or PM should be.
+
+
+#### Lessons Learned
+
+- **Defensive Programming**: The defensive programming code that was already in place was instrumental for detecting these errors. As soon as I ran the code the problems were detected and displaying the source file name and problematic file as part of the error report streamlined the troubleshooting.
+
+
+- **Real Data**: Using real data early to check the code for correctness saved me the trouble of dealing with bogus data at the database.
+
+
+- **Reading Documentation**: Reading the documentation helped me to build the defensive programming code and also helped me to interpret the errors and know how to fix them. Knowing your stack beats vibe coding. Knowing the stack is part of what it makes a Tech Founder.
+
+#### Achievements
+
+- **Fixed Embedded Nulls**: The problem was the code that folds extended Latin characters to ASCII. The destination pointer would be incremented whether or not folding took place and this had the side effect of embedding null characters `\0`. The appearance of the null character comes from the fact that the code uses an anonymous memory mapping `mmap()` as a destination buffer, which is zero initialized by the Linux Kernel before it is handed to the application for security purposes.
+
+
+- **Fixed Octal Base Interpretation**: The other problem was puzzling at first, the `strtol()` function set the `endptr` to a number and that number was `8`. The reason for this is that the code was using the special zero value for the base. The tool can interpret numeric data in a string in various bases. The zero value is tricky because the number may be interpreted as octal, decimal, or hexadecimal depending on the pointed memory region. Therefore, when the pointed area has `08` the util switches to octal because of the leading zero but then stops at `8` because it is invalid (`0` - `7` are legit octal values). By explicitly telling `strtol()` to use base `10` the time values were handled properly.
+
+
+- **Fixed Edge Case**: The tool `mktime()` to convert `struct tm` data into a 64-bit integer expects the time data (seconds, minutes, hour, etc.) to be bounded to a range. Particularly, hour values must be in the asymmetric range `[0, 24)`. This means that hours values in the range `12:00pm - 12:59pm` should not increment the hour value. This issue was also found by the defensive programming code. The fix was to increment the hour value by 12 after from `1:00pm` to `11:59pm`.
