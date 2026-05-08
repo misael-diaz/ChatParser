@@ -19,6 +19,8 @@ struct mapping {
 	uint64_t size_timestamp;
 	uint64_t offset_user;
 	uint64_t size_user;
+	uint64_t offset_chat;
+	uint64_t size_chat;
 };
 
 int main(int argc, char *argv[])
@@ -1091,13 +1093,31 @@ int main(int argc, char *argv[])
 				continue;
 			}
 
-			fprintf(stdout, "%s", mmddyy);
 			map->offset_user = (vsep - dstbuf);
 			map->size_user = (vend - vsep);
 
 			memset(user, 0, sizeof(user));
 			memcpy(user, dstbuf + map->offset_user, map->size_user);
-			fprintf(stdout, "%s\n", user);
+
+			// maps the chat data
+			++vend;
+			void *vnxt = NULL;
+			if ((timestamps - 1) == i) {
+				vnxt = dstbuf + (len_txt + 1);
+			} else {
+				struct mapping const * const nextmap = (map + 1);
+				vnxt = dstbuf + nextmap->offset_timestamp;
+			}
+			map->offset_chat = (vend - dstbuf);
+			map->size_chat = (vnxt - vend);
+			uint64_t const size = ((map->size_chat < sizeof(chat))
+					? map->size_chat
+					: sizeof(chat)
+			);
+			memset(chat, 0, sizeof(chat));
+			memcpy(chat, dstbuf + map->offset_chat, size);
+			chat[size - 1] = 0;
+			fprintf(stdout, "%s :: %s :: %s\n", mmddyy, user, chat);
 		}
 		else {
 			fprintf(stdout, "%s", "would overrun timestamp placeholder\n");
