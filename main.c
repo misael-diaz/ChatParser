@@ -17,6 +17,8 @@
 struct mapping {
 	uint64_t offset_timestamp;
 	uint64_t size_timestamp;
+	uint64_t offset_user;
+	uint64_t size_user;
 };
 
 int main(int argc, char *argv[])
@@ -1060,11 +1062,42 @@ int main(int argc, char *argv[])
 	// checks the chat mapping array (timestamp, userid, and message)
 	fprintf(stdout, "timestamps: %lu\n", timestamps);
 	map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
+	char unsigned user[32];
+	char unsigned chat[64];
 	for (uint32_t i = 0; i != timestamps; ++i, ++map) {
 		if (sizeof(mmddyy) > map->size_timestamp) {
 			memset(mmddyy, 0, sizeof(mmddyy));
 			memcpy(mmddyy, dstbuf + map->offset_timestamp, map->size_timestamp);
-			fprintf(stdout, "%s\n", mmddyy);
+			void *vsep = strstr(dstbuf + map->offset_timestamp, "-");
+			if (!vsep) {
+				fprintf(stderr, "%s", "error: missing timestamp separator\n");
+				_exit(1);
+			}
+			vsep += 2;
+			char const * const messages = "messages";
+			if (!strncmp(messages, vsep, sizeof(messages))) {
+				continue;
+			}
+
+			void *vend = strstr(vsep, ":");
+			if (!vend) {
+				fprintf(stderr, "%s", "error: missing userdata\n");
+				_exit(1);
+			}
+
+			// for new contacts whatsapp does not add the : before the next timestamp
+			void *vnln = strstr(vsep, "\n");
+			if (vnln < vend) {
+				continue;
+			}
+
+			fprintf(stdout, "%s", mmddyy);
+			map->offset_user = (vsep - dstbuf);
+			map->size_user = (vend - vsep);
+
+			memset(user, 0, sizeof(user));
+			memcpy(user, dstbuf + map->offset_user, map->size_user);
+			fprintf(stdout, "%s\n", user);
 		}
 		else {
 			fprintf(stdout, "%s", "would overrun timestamp placeholder\n");
