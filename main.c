@@ -1061,7 +1061,7 @@ int main(int argc, char *argv[])
 	    }
 	}
 
-	// checks the chat mapping array (timestamp, userid, and message)
+	// updates the mapping array (timestamp, user, and chat messages)
 	fprintf(stdout, "timestamps: %lu\n", timestamps);
 	map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
 	char unsigned user[32];
@@ -1099,7 +1099,6 @@ int main(int argc, char *argv[])
 			memset(user, 0, sizeof(user));
 			memcpy(user, dstbuf + map->offset_user, map->size_user);
 
-			// maps the chat data
 			++vend;
 			void *vnxt = NULL;
 			if ((timestamps - 1) == i) {
