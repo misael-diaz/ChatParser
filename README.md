@@ -65,7 +65,7 @@ Quick access to the development logs:
 - [Day 4: Exploring Timestamp Encodings](#day-4)
 - [Day 5: Timestamp Spatial Mapping](#day-5)
 - [Day 6: Forging a Unix Filter](#day-6)
-- [Day 7: Fixes](#day-7)
+- [Day 7: Fixes and Spatial Mappings](#day-7)
 
 
 ### Day 1
