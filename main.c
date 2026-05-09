@@ -21,7 +21,11 @@ struct mapping {
 	uint64_t size_user;
 	uint64_t offset_chat;
 	uint64_t size_chat;
+	uint64_t timestamp;
+	uint64_t _padding;
 };
+
+_Static_assert(64 == sizeof(struct mapping));
 
 int main(int argc, char *argv[])
 {
@@ -342,6 +346,7 @@ int main(int argc, char *argv[])
 	int64_t mon = 0;
 	int64_t year = 0;
 	int64_t encoded_time = 0;
+	int64_t prev_timestamp = 0;
 	int64_t const isdst = 0;
 	uint64_t timestamps = 0;
 	uint32_t lineno = 0;
@@ -508,6 +513,11 @@ int main(int argc, char *argv[])
 					if (dm < nl) {
 						map->offset_timestamp = (vptr - dstbuf);
 						map->size_timestamp = (((void*) dm) - vptr);
+						if (prev_timestamp >= encoded_time) {
+							encoded_time = (1 + prev_timestamp);
+						}
+						prev_timestamp = encoded_time;
+						map->timestamp = encoded_time;
 						++timestamps;
 						++map;
 					}
@@ -681,6 +691,11 @@ int main(int argc, char *argv[])
 					    if (dm < nl) {
 						    map->offset_timestamp = (vptr - dstbuf);
 						    map->size_timestamp = (((void*) dm) - vptr);
+						    if (prev_timestamp >= encoded_time) {
+							    encoded_time = (1 + prev_timestamp);
+						    }
+						    prev_timestamp = encoded_time;
+						    map->timestamp = encoded_time;
 						    ++timestamps;
 						    ++map;
 					    }
@@ -859,6 +874,11 @@ int main(int argc, char *argv[])
 					    if (dm < nl) {
 						    map->offset_timestamp = (vptr - dstbuf);
 						    map->size_timestamp = (((void*) dm) - vptr);
+						    if (prev_timestamp >= encoded_time) {
+							    encoded_time = (1 + prev_timestamp);
+						    }
+						    prev_timestamp = encoded_time;
+						    map->timestamp = encoded_time;
 						    ++timestamps;
 						    ++map;
 					    }
@@ -1031,6 +1051,11 @@ int main(int argc, char *argv[])
 						if (dm < nl) {
 							map->offset_timestamp = (vptr - dstbuf);
 							map->size_timestamp = (((void*) dm) - vptr);
+							if (prev_timestamp >= encoded_time) {
+								encoded_time = (1 + prev_timestamp);
+							}
+							prev_timestamp = encoded_time;
+							map->timestamp = encoded_time;
 							++timestamps;
 							++map;
 						}
@@ -1064,9 +1089,16 @@ int main(int argc, char *argv[])
 	// updates the mapping array (timestamp, user, and chat messages)
 	fprintf(stdout, "timestamps: %lu\n", timestamps);
 	map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
+	prev_timestamp = 0;
 	char unsigned user[32];
 	char unsigned chat[64];
 	for (uint32_t i = 0; i != timestamps; ++i, ++map) {
+		if (map->timestamp <= prev_timestamp) {
+			fprintf(stderr, "%s", "error: timestamp increment\n");
+			_exit(1);
+		}
+		prev_timestamp = map->timestamp;
+
 		if (sizeof(mmddyy) > map->size_timestamp) {
 			memset(mmddyy, 0, sizeof(mmddyy));
 			memcpy(mmddyy, dstbuf + map->offset_timestamp, map->size_timestamp);
@@ -1116,7 +1148,8 @@ int main(int argc, char *argv[])
 			memset(chat, 0, sizeof(chat));
 			memcpy(chat, dstbuf + map->offset_chat, size);
 			chat[size - 1] = 0;
-			fprintf(stdout, "%s :: %s :: %s\n", mmddyy, user, chat);
+			uint64_t const timestamp = map->timestamp;
+			fprintf(stdout, "%s :: %lu ::  %s :: %s\n", mmddyy, timestamp, user, chat);
 		}
 		else {
 			fprintf(stdout, "%s", "would overrun timestamp placeholder\n");
