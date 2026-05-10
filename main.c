@@ -550,7 +550,7 @@ int main(int argc, char *argv[])
 				    memcpy(mmddyy, dst, sz_timestamp);
 				    mmddyy[sz_timestamp] = 0;
 				}
-				fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+				//fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				memset(mmddyy, 0, sizeof(mmddyy));
 			    }
 			}
@@ -735,7 +735,7 @@ int main(int argc, char *argv[])
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+				    //fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
@@ -926,7 +926,7 @@ int main(int argc, char *argv[])
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+				    //fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
@@ -1111,7 +1111,7 @@ int main(int argc, char *argv[])
 					    memcpy(mmddyy, dst, sz_timestamp);
 					    mmddyy[sz_timestamp] = 0;
 					}
-					fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+					//fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 					memset(mmddyy, 0, sizeof(mmddyy));
 				    }
 				}
@@ -1188,7 +1188,7 @@ int main(int argc, char *argv[])
 			memcpy(chat, dstbuf + map->offset_chat, size);
 			chat[size - 1] = 0;
 			uint64_t const timestamp = map->timestamp;
-			fprintf(stdout, "%s :: %lu ::  %s :: %s\n", mmddyy, timestamp, user, chat);
+			//fprintf(stdout, "%s :: %lu ::  %s :: %s\n", mmddyy, timestamp, user, chat);
 		}
 		else {
 			fprintf(stdout, "%s", "would overrun timestamp placeholder\n");
