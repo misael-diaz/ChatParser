@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sqlite3.h>
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
@@ -1214,6 +1215,77 @@ int main(int argc, char *argv[])
 			}
 		}
 	} while (bytes_written < len_txt);
+
+	sqlite3 *conndb = NULL;
+	char const * const namedb = "whatsapp-chat.db";
+	rc = sqlite3_open(namedb, &conndb);
+	if (SQLITE_OK != rc) {
+		fprintf(stderr, "%s %s\n", "error: failed to open connection to database:", namedb);
+		_exit(1);
+	}
+
+	char transdb[] = (
+		"BEGIN TRANSACTION;\n"
+		"CREATE TABLE IF NOT EXISTS users ("
+		"id INTEGER PRIMARY KEY AUTOINCREMENT,"
+		"name TEXT UNIQUE"
+		");\n"
+	);
+	uint64_t const bytes_transdb = (sizeof(transdb) - 1);
+
+	uint64_t const offset_sqlbase = (offset_mapbase + (timestamps * sizeof(*map)));
+
+	offset = 0;
+	memcpy(dstbuf + offset_sqlbase + offset, transdb, bytes_transdb);
+	offset += bytes_transdb;
+
+	offset_map = 0;
+	for (uint32_t i = 0; i != timestamps; ++i, offset_map += sizeof(*map)) {
+
+		map = (dstbuf + offset_mapbase + offset_map);
+		if (map->size_user) {
+			// NOTE: user names may have spaces so we need to use single quotes
+			char insert[] = "INSERT OR IGNORE INTO users (name) VALUES ('";
+			uint64_t const bytes_insert = (sizeof(insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, insert, bytes_insert);
+			offset += bytes_insert;
+
+			memcpy(dstbuf + offset_sqlbase + offset, dstbuf + map->offset_user, map->size_user);
+			offset += map->size_user;
+
+			char trail_insert[] = "');\n";
+			uint64_t const bytes_trailsert = (sizeof(trail_insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, trail_insert, bytes_trailsert);
+			offset += bytes_trailsert;
+
+			if ((len_mmap - (offset_sqlbase + offset)) <= pagesz) {
+				dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+				len_mmap <<= 1;
+			}
+		}
+	}
+
+	char const * const commit = "COMMIT;";
+	uint64_t const bytes_commit = snprintf(NULL, 0, "%s", commit);
+	memcpy(dstbuf + offset_sqlbase + offset, commit, bytes_commit);
+	offset += bytes_commit;
+
+	char *errmsg = NULL;
+	rc = sqlite3_exec(conndb, dstbuf + offset_sqlbase, NULL, NULL, &errmsg);
+	if (SQLITE_OK != rc) {
+		fprintf(stderr, "%s", "error: SQL error\n");
+		if (errmsg) {
+			fprintf(stderr, "%s\n", errmsg);
+		}
+		sqlite3_close(conndb);
+		_exit(1);
+	}
+
+	rc = sqlite3_close(conndb);
+	if (SQLITE_OK != rc) {
+		fprintf(stderr, "%s %s\n", "error: failed to close connection to database:", namedb);
+		_exit(1);
+	}
 	return 0;
 
 #if DEVBUILD
