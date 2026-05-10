@@ -510,7 +510,7 @@ int main(int argc, char *argv[])
 					goto err_encoding_timestamp;
 				}
 
-				vptr = dst;
+				vptr = &dst[offset + 0];
 				nl = strstr(vptr, "\n");
 				dm = strstr(vptr, "-");
 				if (nl && dm) {
@@ -696,7 +696,7 @@ int main(int argc, char *argv[])
 					    goto err_encoding_timestamp;
 				    }
 
-				    vptr = dst;
+				    vptr = &dst[offset + 0];
 				    nl = strstr(vptr, "\n");
 				    dm = strstr(vptr, "-");
 				    if (nl && dm) {
@@ -887,7 +887,7 @@ int main(int argc, char *argv[])
 					    goto err_encoding_timestamp;
 				    }
 
-				    vptr = dst;
+				    vptr = &dst[offset + 0];
 				    nl = strstr(vptr, "\n");
 				    dm = strstr(vptr, "-");
 				    if (nl && dm) {
@@ -1072,7 +1072,7 @@ int main(int argc, char *argv[])
 						goto err_encoding_timestamp;
 					}
 
-					vptr = dst;
+					vptr = &dst[offset + 0];
 					nl = strstr(vptr, "\n");
 					dm = strstr(vptr, "-");
 					if (nl && dm) {
