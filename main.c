@@ -350,6 +350,7 @@ int main(int argc, char *argv[])
 	int64_t const isdst = 0;
 	uint64_t timestamps = 0;
 	uint64_t offset = 0;
+	uint64_t const offset_mapbase = ((len_txt + 0x1fu) & ~0x1fu);
 	uint32_t lineno = 0;
 	uint8_t sz_timestamp = 0;
 	void *vptr = NULL;
@@ -358,7 +359,7 @@ int main(int argc, char *argv[])
 	char *dm = NULL;
 	struct tm timestamp = {};
 	struct tm * const tp = &timestamp;
-	struct mapping *map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
+	struct mapping *map = (dstbuf + offset_mapbase);
 	char unsigned mmddyy[32];
 	memset(mmddyy, 0, sizeof(mmddyy));
 	for (int i = 0; i != len_txt; ++i, ++offset) {
@@ -1089,7 +1090,7 @@ int main(int argc, char *argv[])
 
 	// updates the mapping array (timestamp, user, and chat messages)
 	fprintf(stdout, "timestamps: %lu\n", timestamps);
-	map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
+	map = (dstbuf + offset_mapbase);
 	prev_timestamp = 0;
 	char unsigned user[32];
 	char unsigned chat[64];
