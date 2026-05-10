@@ -351,6 +351,7 @@ int main(int argc, char *argv[])
 	uint64_t timestamps = 0;
 	uint64_t offset = 0;
 	uint64_t const offset_mapbase = ((len_txt + 0x1fu) & ~0x1fu);
+	uint64_t offset_map = 0;
 	uint32_t lineno = 0;
 	uint8_t sz_timestamp = 0;
 	void *vptr = NULL;
@@ -359,10 +360,11 @@ int main(int argc, char *argv[])
 	char *dm = NULL;
 	struct tm timestamp = {};
 	struct tm * const tp = &timestamp;
-	struct mapping *map = (dstbuf + offset_mapbase);
+	struct mapping const *map = (dstbuf + offset_mapbase);
 	char unsigned mmddyy[32];
 	memset(mmddyy, 0, sizeof(mmddyy));
 	for (int i = 0; i != len_txt; ++i, ++offset) {
+	    dst = dstbuf; // NOTE: if the mmap base address moves pointers become invalidated on growth
 	    if ((dst[offset + 0] >= 0x30u) && (dst[offset + 0] < 0x3au)) {
 		if ('/' == dst[offset + 1]) {
 
@@ -513,6 +515,8 @@ int main(int argc, char *argv[])
 				dm = strstr(vptr, "-");
 				if (nl && dm) {
 					if (dm < nl) {
+						void * const vmap = dstbuf + offset_mapbase + offset_map;
+						struct mapping * const map = vmap;
 						map->offset_timestamp = (vptr - dstbuf);
 						map->size_timestamp = (((void*) dm) - vptr);
 						if (prev_timestamp >= encoded_time) {
@@ -520,8 +524,8 @@ int main(int argc, char *argv[])
 						}
 						prev_timestamp = encoded_time;
 						map->timestamp = encoded_time;
+						offset_map += sizeof(*map);
 						++timestamps;
-						++map;
 					}
 				}
 
@@ -691,6 +695,8 @@ int main(int argc, char *argv[])
 				    dm = strstr(vptr, "-");
 				    if (nl && dm) {
 					    if (dm < nl) {
+						    void * const vmap = dstbuf + offset_mapbase + offset_map;
+						    struct mapping * const map = vmap;
 						    map->offset_timestamp = (vptr - dstbuf);
 						    map->size_timestamp = (((void*) dm) - vptr);
 						    if (prev_timestamp >= encoded_time) {
@@ -698,8 +704,8 @@ int main(int argc, char *argv[])
 						    }
 						    prev_timestamp = encoded_time;
 						    map->timestamp = encoded_time;
+						    offset_map += sizeof(*map);
 						    ++timestamps;
-						    ++map;
 					    }
 				    }
 
@@ -874,6 +880,8 @@ int main(int argc, char *argv[])
 				    dm = strstr(vptr, "-");
 				    if (nl && dm) {
 					    if (dm < nl) {
+						    void * const vmap = dstbuf + offset_mapbase + offset_map;
+						    struct mapping * const map = vmap;
 						    map->offset_timestamp = (vptr - dstbuf);
 						    map->size_timestamp = (((void*) dm) - vptr);
 						    if (prev_timestamp >= encoded_time) {
@@ -881,8 +889,8 @@ int main(int argc, char *argv[])
 						    }
 						    prev_timestamp = encoded_time;
 						    map->timestamp = encoded_time;
+						    offset_map += sizeof(*map);
 						    ++timestamps;
-						    ++map;
 					    }
 				    }
 
@@ -1051,6 +1059,8 @@ int main(int argc, char *argv[])
 					dm = strstr(vptr, "-");
 					if (nl && dm) {
 						if (dm < nl) {
+							void * const vmap = dstbuf + offset_mapbase + offset_map;
+							struct mapping * const map = vmap;
 							map->offset_timestamp = (vptr - dstbuf);
 							map->size_timestamp = (((void*) dm) - vptr);
 							if (prev_timestamp >= encoded_time) {
@@ -1058,8 +1068,8 @@ int main(int argc, char *argv[])
 							}
 							prev_timestamp = encoded_time;
 							map->timestamp = encoded_time;
+							offset_map += sizeof(*map);
 							++timestamps;
-							++map;
 						}
 					}
 
@@ -1092,9 +1102,12 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "timestamps: %lu\n", timestamps);
 	map = (dstbuf + offset_mapbase);
 	prev_timestamp = 0;
+	offset_map = 0;
 	char unsigned user[32];
 	char unsigned chat[64];
-	for (uint32_t i = 0; i != timestamps; ++i, ++map) {
+	for (uint32_t i = 0; i != timestamps; ++i, offset_map += sizeof(*map)) {
+		void * const vmap = (dstbuf + (offset_mapbase + offset_map));
+		struct mapping * const map = vmap;
 		if (map->timestamp <= prev_timestamp) {
 			fprintf(stderr, "%s", "error: timestamp increment\n");
 			_exit(1);
