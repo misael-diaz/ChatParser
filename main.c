@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
 	uint64_t const offset_mapbase = ((len_txt + 0x3fu) & ~0x3fu);
 	uint64_t offset_map = 0;
 	uint32_t lineno = 0;
-	uint8_t sz_timestamp = 0;
+	uint32_t sz_timestamp = 0;
 	void *vptr = NULL;
 	char *endptr = NULL;
 	char *nl = NULL;
