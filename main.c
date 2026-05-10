@@ -526,6 +526,12 @@ int main(int argc, char *argv[])
 						map->timestamp = encoded_time;
 						offset_map += sizeof(*map);
 						++timestamps;
+
+						if (len_mmap - (offset_mapbase + offset_map) <= pagesz) {
+							dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+							len_mmap <<= 1;
+							dst = dstbuf;
+						}
 					}
 				}
 
@@ -706,6 +712,12 @@ int main(int argc, char *argv[])
 						    map->timestamp = encoded_time;
 						    offset_map += sizeof(*map);
 						    ++timestamps;
+
+						    if (len_mmap - (offset_mapbase + offset_map) <= pagesz) {
+							    dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+							    len_mmap <<= 1;
+							    dst = dstbuf;
+						    }
 					    }
 				    }
 
@@ -891,6 +903,12 @@ int main(int argc, char *argv[])
 						    map->timestamp = encoded_time;
 						    offset_map += sizeof(*map);
 						    ++timestamps;
+
+						    if (len_mmap - (offset_mapbase + offset_map) <= pagesz) {
+							    dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+							    len_mmap <<= 1;
+							    dst = dstbuf;
+						    }
 					    }
 				    }
 
@@ -1070,6 +1088,12 @@ int main(int argc, char *argv[])
 							map->timestamp = encoded_time;
 							offset_map += sizeof(*map);
 							++timestamps;
+
+							if (len_mmap - (offset_mapbase + offset_map) <= pagesz) {
+								dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+								len_mmap <<= 1;
+								dst = dstbuf;
+							}
 						}
 					}
 
