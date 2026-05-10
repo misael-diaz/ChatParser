@@ -350,7 +350,7 @@ int main(int argc, char *argv[])
 	int64_t const isdst = 0;
 	uint64_t timestamps = 0;
 	uint64_t offset = 0;
-	uint64_t const offset_mapbase = ((len_txt + 0x1fu) & ~0x1fu);
+	uint64_t const offset_mapbase = ((len_txt + 0x3fu) & ~0x3fu);
 	uint64_t offset_map = 0;
 	uint32_t lineno = 0;
 	uint8_t sz_timestamp = 0;
