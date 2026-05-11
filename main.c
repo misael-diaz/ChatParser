@@ -1177,7 +1177,7 @@ int main(int argc, char *argv[])
 			++vend;
 			void *vnxt = NULL;
 			if ((timestamps - 1) == i) {
-				vnxt = dstbuf + (len_txt + 1);
+				vnxt = dstbuf + len_txt;
 			} else {
 				struct mapping const * const nextmap = (map + 1);
 				vnxt = dstbuf + nextmap->offset_timestamp;
