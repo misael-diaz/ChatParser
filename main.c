@@ -6,6 +6,9 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#if DEVBUILD
+#include <sqlite3.h>
+#endif
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
@@ -21,7 +24,11 @@ struct mapping {
 	uint64_t size_user;
 	uint64_t offset_chat;
 	uint64_t size_chat;
+	uint64_t timestamp;
+	uint64_t _padding;
 };
+
+_Static_assert(64 == sizeof(struct mapping));
 
 int main(int argc, char *argv[])
 {
@@ -186,6 +193,9 @@ int main(int argc, char *argv[])
 			else if (((*txt) >= 0x0bu) && ((*txt) < 0x20u)) {
 				*dst = 0x20u;
 			}
+			else if (((*txt) == 0x22u) || ((*txt) == 0x27u)) { // NOTE: folds quotes to space for SQL
+				*dst = 0x20u;
+			}
 			else if (((*txt) >= 0x41u) && ((*txt) < 0x5bu)) {
 				*dst = (((*txt) - 0x41u) + 0x61u);
 			}
@@ -342,49 +352,54 @@ int main(int argc, char *argv[])
 	int64_t mon = 0;
 	int64_t year = 0;
 	int64_t encoded_time = 0;
+	int64_t prev_timestamp = 0;
 	int64_t const isdst = 0;
 	uint64_t timestamps = 0;
+	uint64_t offset = 0;
+	uint64_t const offset_mapbase = ((len_txt + 0x3fu) & ~0x3fu);
+	uint64_t offset_map = 0;
 	uint32_t lineno = 0;
-	uint8_t sz_timestamp = 0;
+	uint32_t sz_timestamp = 0;
 	void *vptr = NULL;
 	char *endptr = NULL;
 	char *nl = NULL;
 	char *dm = NULL;
 	struct tm timestamp = {};
 	struct tm * const tp = &timestamp;
-	struct mapping *map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
+	struct mapping const *map = (dstbuf + offset_mapbase);
 	char unsigned mmddyy[32];
 	memset(mmddyy, 0, sizeof(mmddyy));
-	for (int i = 0; i != len_txt; ++i, ++dst) {
-	    if ((dst[0] >= 0x30u) && (dst[0] < 0x3au)) {
-		if ('/' == dst[1]) {
+	for (int i = 0; i != len_txt; ++i, ++offset) {
+	    dst = dstbuf; // NOTE: if the mmap base address moves pointers become invalidated on growth
+	    if ((dst[offset + 0] >= 0x30u) && (dst[offset + 0] < 0x3au)) {
+		if ('/' == dst[offset + 1]) {
 
-		    if ((dst[2] >= 0x30u) && (dst[2] < 0x3au)) {
-			if ('/' == dst[3]) {
+		    if ((dst[offset + 2] >= 0x30u) && (dst[offset + 2] < 0x3au)) {
+			if ('/' == dst[offset + 3]) {
 
 			    if (
-				    (dst[4] >= 0x30u) && (dst[4] < 0x3au) &&
-				    (dst[5] >= 0x30u) && (dst[5] < 0x3au) &&
-				    (dst[6] == ',') &&
-				    (dst[7] == ' ') && (
+				    (dst[offset + 4] >= 0x30u) && (dst[offset + 4] < 0x3au) &&
+				    (dst[offset + 5] >= 0x30u) && (dst[offset + 5] < 0x3au) &&
+				    (dst[offset + 6] == ',') &&
+				    (dst[offset + 7] == ' ') && (
 					(
-					 (dst[8] >= 0x30u) && (dst[8] < 0x3au) &&
-					 (dst[9] == ':') &&
-					 (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
-					 (dst[11] >= 0x30u) && (dst[11] < 0x3au)
+					 (dst[offset + 8] >= 0x30u) && (dst[offset + 8] < 0x3au) &&
+					 (dst[offset + 9] == ':') &&
+					 (dst[offset + 10] >= 0x30u) && (dst[offset + 10] < 0x3au) &&
+					 (dst[offset + 11] >= 0x30u) && (dst[offset + 11] < 0x3au)
 					) ||
 					(
-					 (dst[8] >= 0x30u) && (dst[8] < 0x3au) &&
-					 (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
-					 (dst[10] == ':') &&
-					 (dst[11] >= 0x30u) && (dst[11] < 0x3au) &&
-					 (dst[12] >= 0x30u) && (dst[12] < 0x3au)
+					 (dst[offset + 8] >= 0x30u) && (dst[offset + 8] < 0x3au) &&
+					 (dst[offset + 9] >= 0x30u) && (dst[offset + 9] < 0x3au) &&
+					 (dst[offset + 10] == ':') &&
+					 (dst[offset + 11] >= 0x30u) && (dst[offset + 11] < 0x3au) &&
+					 (dst[offset + 12] >= 0x30u) && (dst[offset + 12] < 0x3au)
 					)
 				    )
 			       ) {
 
 				errno = 0;
-				vptr = &dst[0];
+				vptr = &dst[offset + 0];
 				endptr = NULL;
 				lineno = (1 + (__LINE__));
 				mon = (strtol(vptr, &endptr, 10) - 1);
@@ -402,7 +417,7 @@ int main(int argc, char *argv[])
 				}
 
 				errno = 0;
-				vptr = &dst[2];
+				vptr = &dst[offset + 2];
 				endptr = NULL;
 				lineno = (1 + (__LINE__));
 				mday = strtol(vptr, &endptr, 10);
@@ -420,7 +435,7 @@ int main(int argc, char *argv[])
 				}
 
 				errno = 0;
-				vptr = &dst[4];
+				vptr = &dst[offset + 4];
 				endptr = NULL;
 				lineno = (1 + (__LINE__));
 				year = (strtol(vptr, &endptr, 10) + (2000 - 1900));
@@ -438,7 +453,7 @@ int main(int argc, char *argv[])
 				}
 
 				errno = 0;
-				vptr = &dst[8];
+				vptr = &dst[offset + 8];
 				endptr = NULL;
 				lineno = (1 + (__LINE__));
 				hour = strtol(vptr, &endptr, 10);
@@ -501,19 +516,32 @@ int main(int argc, char *argv[])
 					goto err_encoding_timestamp;
 				}
 
-				vptr = dst;
+				vptr = &dst[offset + 0];
 				nl = strstr(vptr, "\n");
 				dm = strstr(vptr, "-");
 				if (nl && dm) {
 					if (dm < nl) {
+						void * const vmap = dstbuf + offset_mapbase + offset_map;
+						struct mapping * const map = vmap;
 						map->offset_timestamp = (vptr - dstbuf);
 						map->size_timestamp = (((void*) dm) - vptr);
+						if (prev_timestamp >= encoded_time) {
+							encoded_time = (1 + prev_timestamp);
+						}
+						prev_timestamp = encoded_time;
+						map->timestamp = encoded_time;
+						offset_map += sizeof(*map);
 						++timestamps;
-						++map;
+
+						if (len_mmap - (offset_mapbase + offset_map) <= pagesz) {
+							dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+							len_mmap <<= 1;
+							dst = dstbuf;
+						}
 					}
 				}
 
-				uint16_t const AntePostMeridiemValue = ((dst[13] << 8) | dst[12]);
+				uint16_t const AntePostMeridiemValue = ((dst[offset + 13] << 8) | dst[offset + 12]);
 				if (
 					(0x6d61u == AntePostMeridiemValue) ||
 					(0x6d70u == AntePostMeridiemValue)
@@ -528,36 +556,36 @@ int main(int argc, char *argv[])
 				    memcpy(mmddyy, dst, sz_timestamp);
 				    mmddyy[sz_timestamp] = 0;
 				}
-				fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+				//fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				memset(mmddyy, 0, sizeof(mmddyy));
 			    }
 			}
-			else if ((dst[3] >= 0x30u) && (dst[3] < 0x3au)) {
-			    if ('/' == dst[4]) {
+			else if ((dst[offset + 3] >= 0x30u) && (dst[offset + 3] < 0x3au)) {
+			    if ('/' == dst[offset + 4]) {
 
 				if (
-					(dst[5] >= 0x30u) && (dst[5] < 0x3au) &&
-					(dst[6] >= 0x30u) && (dst[6] < 0x3au) &&
-					(dst[7] == ',') &&
-					(dst[8] == ' ') && (
+					(dst[offset + 5] >= 0x30u) && (dst[offset + 5] < 0x3au) &&
+					(dst[offset + 6] >= 0x30u) && (dst[offset + 6] < 0x3au) &&
+					(dst[offset + 7] == ',') &&
+					(dst[offset + 8] == ' ') && (
 					    (
-					     (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
-					     (dst[10] == ':') &&
-					     (dst[11] >= 0x30u) && (dst[11] < 0x3au) &&
-					     (dst[12] >= 0x30u) && (dst[12] < 0x3au)
+					     (dst[offset + 9] >= 0x30u) && (dst[offset + 9] < 0x3au) &&
+					     (dst[offset + 10] == ':') &&
+					     (dst[offset + 11] >= 0x30u) && (dst[offset + 11] < 0x3au) &&
+					     (dst[offset + 12] >= 0x30u) && (dst[offset + 12] < 0x3au)
 					    ) ||
 					    (
-					     (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
-					     (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
-					     (dst[11] == ':') &&
-					     (dst[12] >= 0x30u) && (dst[12] < 0x3au) &&
-					     (dst[13] >= 0x30u) && (dst[13] < 0x3au)
+					     (dst[offset + 9] >= 0x30u) && (dst[offset + 9] < 0x3au) &&
+					     (dst[offset + 10] >= 0x30u) && (dst[offset + 10] < 0x3au) &&
+					     (dst[offset + 11] == ':') &&
+					     (dst[offset + 12] >= 0x30u) && (dst[offset + 12] < 0x3au) &&
+					     (dst[offset + 13] >= 0x30u) && (dst[offset + 13] < 0x3au)
 					    )
 					)
 				   ) {
 
 				    errno = 0;
-				    vptr = &dst[0];
+				    vptr = &dst[offset + 0];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    mon = (strtol(vptr, &endptr, 10) - 1);
@@ -575,7 +603,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    errno = 0;
-				    vptr = &dst[2];
+				    vptr = &dst[offset + 2];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    mday = strtol(vptr, &endptr, 10);
@@ -593,7 +621,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    errno = 0;
-				    vptr = &dst[5];
+				    vptr = &dst[offset + 5];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    year = (strtol(vptr, &endptr, 10) + (2000 - 1900));
@@ -611,7 +639,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    errno = 0;
-				    vptr = &dst[9];
+				    vptr = &dst[offset + 9];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    hour = strtol(vptr, &endptr, 10);
@@ -674,19 +702,32 @@ int main(int argc, char *argv[])
 					    goto err_encoding_timestamp;
 				    }
 
-				    vptr = dst;
+				    vptr = &dst[offset + 0];
 				    nl = strstr(vptr, "\n");
 				    dm = strstr(vptr, "-");
 				    if (nl && dm) {
 					    if (dm < nl) {
+						    void * const vmap = dstbuf + offset_mapbase + offset_map;
+						    struct mapping * const map = vmap;
 						    map->offset_timestamp = (vptr - dstbuf);
 						    map->size_timestamp = (((void*) dm) - vptr);
+						    if (prev_timestamp >= encoded_time) {
+							    encoded_time = (1 + prev_timestamp);
+						    }
+						    prev_timestamp = encoded_time;
+						    map->timestamp = encoded_time;
+						    offset_map += sizeof(*map);
 						    ++timestamps;
-						    ++map;
+
+						    if (len_mmap - (offset_mapbase + offset_map) <= pagesz) {
+							    dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+							    len_mmap <<= 1;
+							    dst = dstbuf;
+						    }
 					    }
 				    }
 
-				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
+				    uint16_t const AntePostMeridiemValue = ((dst[offset + 14] << 8) | dst[offset + 13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
 					    (0x6d70u == AntePostMeridiemValue)
@@ -700,42 +741,42 @@ int main(int argc, char *argv[])
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+				    //fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
 			}
 		    }
 		}
-		else if ((dst[1] >= 0x30u) && (dst[1] < 0x3au)) {
-		    if ('/' == dst[2]) {
+		else if ((dst[offset + 1] >= 0x30u) && (dst[offset + 1] < 0x3au)) {
+		    if ('/' == dst[offset + 2]) {
 
-			if ((dst[3] >= 0x30u) && (dst[3] < 0x3au)) {
-			    if ('/' == dst[4]) {
+			if ((dst[offset + 3] >= 0x30u) && (dst[offset + 3] < 0x3au)) {
+			    if ('/' == dst[offset + 4]) {
 
 				if (
-					(dst[5] >= 0x30u) && (dst[5] < 0x3au) &&
-					(dst[6] >= 0x30u) && (dst[6] < 0x3au) &&
-					(dst[7] == ',') &&
-					(dst[8] == ' ') && (
+					(dst[offset + 5] >= 0x30u) && (dst[offset + 5] < 0x3au) &&
+					(dst[offset + 6] >= 0x30u) && (dst[offset + 6] < 0x3au) &&
+					(dst[offset + 7] == ',') &&
+					(dst[offset + 8] == ' ') && (
 					    (
-					     (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
-					     (dst[10] == ':') &&
-					     (dst[11] >= 0x30u) && (dst[11] < 0x3au) &&
-					     (dst[12] >= 0x30u) && (dst[12] < 0x3au)
+					     (dst[offset + 9] >= 0x30u) && (dst[offset + 9] < 0x3au) &&
+					     (dst[offset + 10] == ':') &&
+					     (dst[offset + 11] >= 0x30u) && (dst[offset + 11] < 0x3au) &&
+					     (dst[offset + 12] >= 0x30u) && (dst[offset + 12] < 0x3au)
 					    ) ||
 					    (
-					     (dst[9] >= 0x30u) && (dst[9] < 0x3au) &&
-					     (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
-					     (dst[11] == ':') &&
-					     (dst[12] >= 0x30u) && (dst[12] < 0x3au) &&
-					     (dst[13] >= 0x30u) && (dst[13] < 0x3au)
+					     (dst[offset + 9] >= 0x30u) && (dst[offset + 9] < 0x3au) &&
+					     (dst[offset + 10] >= 0x30u) && (dst[offset + 10] < 0x3au) &&
+					     (dst[offset + 11] == ':') &&
+					     (dst[offset + 12] >= 0x30u) && (dst[offset + 12] < 0x3au) &&
+					     (dst[offset + 13] >= 0x30u) && (dst[offset + 13] < 0x3au)
 					    )
 					)
 				   ) {
 
 				    errno = 0;
-				    vptr = &dst[0];
+				    vptr = &dst[offset + 0];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    mon = (strtol(vptr, &endptr, 10) - 1);
@@ -753,7 +794,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    errno = 0;
-				    vptr = &dst[3];
+				    vptr = &dst[offset + 3];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    mday = strtol(vptr, &endptr, 10);
@@ -771,7 +812,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    errno = 0;
-				    vptr = &dst[5];
+				    vptr = &dst[offset + 5];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    year = (strtol(vptr, &endptr, 10) + (2000 - 1900));
@@ -789,7 +830,7 @@ int main(int argc, char *argv[])
 				    }
 
 				    errno = 0;
-				    vptr = &dst[9];
+				    vptr = &dst[offset + 9];
 				    endptr = NULL;
 				    lineno = (1 + (__LINE__));
 				    hour = strtol(vptr, &endptr, 10);
@@ -852,19 +893,32 @@ int main(int argc, char *argv[])
 					    goto err_encoding_timestamp;
 				    }
 
-				    vptr = dst;
+				    vptr = &dst[offset + 0];
 				    nl = strstr(vptr, "\n");
 				    dm = strstr(vptr, "-");
 				    if (nl && dm) {
 					    if (dm < nl) {
+						    void * const vmap = dstbuf + offset_mapbase + offset_map;
+						    struct mapping * const map = vmap;
 						    map->offset_timestamp = (vptr - dstbuf);
 						    map->size_timestamp = (((void*) dm) - vptr);
+						    if (prev_timestamp >= encoded_time) {
+							    encoded_time = (1 + prev_timestamp);
+						    }
+						    prev_timestamp = encoded_time;
+						    map->timestamp = encoded_time;
+						    offset_map += sizeof(*map);
 						    ++timestamps;
-						    ++map;
+
+						    if (len_mmap - (offset_mapbase + offset_map) <= pagesz) {
+							    dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+							    len_mmap <<= 1;
+							    dst = dstbuf;
+						    }
 					    }
 				    }
 
-				    uint16_t const AntePostMeridiemValue = ((dst[14] << 8) | dst[13]);
+				    uint16_t const AntePostMeridiemValue = ((dst[offset + 14] << 8) | dst[offset + 13]);
 				    if (
 					    (0x6d61u == AntePostMeridiemValue) ||
 					    (0x6d70u == AntePostMeridiemValue)
@@ -878,36 +932,36 @@ int main(int argc, char *argv[])
 					memcpy(mmddyy, dst, sz_timestamp);
 					mmddyy[sz_timestamp] = 0;
 				    }
-				    fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+				    //fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
-			    else if ((dst[4] >= 0x30u) && (dst[4] < 0x3au)) {
-				if ('/' == dst[5]) {
+			    else if ((dst[offset + 4] >= 0x30u) && (dst[offset + 4] < 0x3au)) {
+				if ('/' == dst[offset + 5]) {
 
 				    if (
-					    (dst[6] >= 0x30u) && (dst[6] < 0x3au) &&
-					    (dst[7] >= 0x30u) && (dst[7] < 0x3au) &&
-					    (dst[8] == ',') &&
-					    (dst[9] == ' ') && (
+					    (dst[offset + 6] >= 0x30u) && (dst[offset + 6] < 0x3au) &&
+					    (dst[offset + 7] >= 0x30u) && (dst[offset + 7] < 0x3au) &&
+					    (dst[offset + 8] == ',') &&
+					    (dst[offset + 9] == ' ') && (
 						(
-						 (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
-						 (dst[11] == ':') &&
-						 (dst[12] >= 0x30u) && (dst[12] < 0x3au) &&
-						 (dst[13] >= 0x30u) && (dst[13] < 0x3au)
+						 (dst[offset + 10] >= 0x30u) && (dst[offset + 10] < 0x3au) &&
+						 (dst[offset + 11] == ':') &&
+						 (dst[offset + 12] >= 0x30u) && (dst[offset + 12] < 0x3au) &&
+						 (dst[offset + 13] >= 0x30u) && (dst[offset + 13] < 0x3au)
 						) ||
 						(
-						 (dst[10] >= 0x30u) && (dst[10] < 0x3au) &&
-						 (dst[11] >= 0x30u) && (dst[11] < 0x3au) &&
-						 (dst[12] == ':') &&
-						 (dst[13] >= 0x30u) && (dst[13] < 0x3au) &&
-						 (dst[14] >= 0x30u) && (dst[14] < 0x3au)
+						 (dst[offset + 10] >= 0x30u) && (dst[offset + 10] < 0x3au) &&
+						 (dst[offset + 11] >= 0x30u) && (dst[offset + 11] < 0x3au) &&
+						 (dst[offset + 12] == ':') &&
+						 (dst[offset + 13] >= 0x30u) && (dst[offset + 13] < 0x3au) &&
+						 (dst[offset + 14] >= 0x30u) && (dst[offset + 14] < 0x3au)
 						)
 					    )
 				       ) {
 
 					errno = 0;
-					vptr = &dst[0];
+					vptr = &dst[offset + 0];
 					endptr = NULL;
 					lineno = (1 + (__LINE__));
 					mon = (strtol(vptr, &endptr, 10) - 1);
@@ -925,7 +979,7 @@ int main(int argc, char *argv[])
 					}
 
 					errno = 0;
-					vptr = &dst[3];
+					vptr = &dst[offset + 3];
 					endptr = NULL;
 					lineno = (1 + (__LINE__));
 					mday = strtol(vptr, &endptr, 10);
@@ -943,7 +997,7 @@ int main(int argc, char *argv[])
 					}
 
 					errno = 0;
-					vptr = &dst[6];
+					vptr = &dst[offset + 6];
 					endptr = NULL;
 					lineno = (1 + (__LINE__));
 					year = (strtol(vptr, &endptr, 10) + (2000 - 1900));
@@ -961,7 +1015,7 @@ int main(int argc, char *argv[])
 					}
 
 					errno = 0;
-					vptr = &dst[10];
+					vptr = &dst[offset + 10];
 					endptr = NULL;
 					lineno = (1 + (__LINE__));
 					hour = strtol(vptr, &endptr, 10);
@@ -1024,19 +1078,32 @@ int main(int argc, char *argv[])
 						goto err_encoding_timestamp;
 					}
 
-					vptr = dst;
+					vptr = &dst[offset + 0];
 					nl = strstr(vptr, "\n");
 					dm = strstr(vptr, "-");
 					if (nl && dm) {
 						if (dm < nl) {
+							void * const vmap = dstbuf + offset_mapbase + offset_map;
+							struct mapping * const map = vmap;
 							map->offset_timestamp = (vptr - dstbuf);
 							map->size_timestamp = (((void*) dm) - vptr);
+							if (prev_timestamp >= encoded_time) {
+								encoded_time = (1 + prev_timestamp);
+							}
+							prev_timestamp = encoded_time;
+							map->timestamp = encoded_time;
+							offset_map += sizeof(*map);
 							++timestamps;
-							++map;
+
+							if (len_mmap - (offset_mapbase + offset_map) <= pagesz) {
+								dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+								len_mmap <<= 1;
+								dst = dstbuf;
+							}
 						}
 					}
 
-					uint16_t const AntePostMeridiemValue = ((dst[15] << 8) | dst[14]);
+					uint16_t const AntePostMeridiemValue = ((dst[offset + 15] << 8) | dst[offset + 14]);
 					if (
 						(0x6d61u == AntePostMeridiemValue) ||
 						(0x6d70u == AntePostMeridiemValue)
@@ -1050,7 +1117,7 @@ int main(int argc, char *argv[])
 					    memcpy(mmddyy, dst, sz_timestamp);
 					    mmddyy[sz_timestamp] = 0;
 					}
-					fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
+					//fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
 					memset(mmddyy, 0, sizeof(mmddyy));
 				    }
 				}
@@ -1063,10 +1130,20 @@ int main(int argc, char *argv[])
 
 	// updates the mapping array (timestamp, user, and chat messages)
 	fprintf(stdout, "timestamps: %lu\n", timestamps);
-	map = (dstbuf + ((len_txt + 0x1fu) & ~0x1fu));
+	map = (dstbuf + offset_mapbase);
+	prev_timestamp = 0;
+	offset_map = 0;
 	char unsigned user[32];
 	char unsigned chat[64];
-	for (uint32_t i = 0; i != timestamps; ++i, ++map) {
+	for (uint32_t i = 0; i != timestamps; ++i, offset_map += sizeof(*map)) {
+		void * const vmap = (dstbuf + (offset_mapbase + offset_map));
+		struct mapping * const map = vmap;
+		if (map->timestamp <= prev_timestamp) {
+			fprintf(stderr, "%s", "error: timestamp increment\n");
+			_exit(1);
+		}
+		prev_timestamp = map->timestamp;
+
 		if (sizeof(mmddyy) > map->size_timestamp) {
 			memset(mmddyy, 0, sizeof(mmddyy));
 			memcpy(mmddyy, dstbuf + map->offset_timestamp, map->size_timestamp);
@@ -1102,7 +1179,7 @@ int main(int argc, char *argv[])
 			++vend;
 			void *vnxt = NULL;
 			if ((timestamps - 1) == i) {
-				vnxt = dstbuf + (len_txt + 1);
+				vnxt = dstbuf + len_txt;
 			} else {
 				struct mapping const * const nextmap = (map + 1);
 				vnxt = dstbuf + nextmap->offset_timestamp;
@@ -1116,43 +1193,15 @@ int main(int argc, char *argv[])
 			memset(chat, 0, sizeof(chat));
 			memcpy(chat, dstbuf + map->offset_chat, size);
 			chat[size - 1] = 0;
-			fprintf(stdout, "%s :: %s :: %s\n", mmddyy, user, chat);
+			uint64_t const timestamp = map->timestamp;
+			//fprintf(stdout, "%s :: %lu ::  %s :: %s\n", mmddyy, timestamp, user, chat);
 		}
 		else {
 			fprintf(stdout, "%s", "would overrun timestamp placeholder\n");
 		}
 	}
-
-//EXPERIMENTAL TIMESTAMPS CODE:
-//
-//The following experimental code is going to be removed in a future commit since this is just for verification.
-//
-//The experimental code gives us the idea of what the chat-parser should do with timestamps:
-//construct a `struct tm` -> mktime() -> time_t (64-bit integer) representating the number of seconds since
-//the Unix Epoch.
-//
-//The advantage of doing this is that the math is simple, sorting is also simple, and the
-//time data is unambiguous regardless of the location where the database is hosted.
-//
-//Key points here, setting isdst to zero, meaning no daylight savings, and this makes sense for my use case.
-//The other point is to set the timezone before calling `mktime` so that system timezone won't interfere
-//with the timestamps. This matters when the system timezone does not match the timezone of the chats,
-//and this is my case.
-
-	struct tm t = {};
-	t.tm_sec = 18;
-	t.tm_min = 18;
-	t.tm_hour = 18;
-	t.tm_mday = 4;
-	t.tm_mon = 4;
-	t.tm_year = 2026 - 1900;
-	t.tm_isdst = 0;
-	setenv("TZ", "EST-5:00:00", 1);
-	int64_t time = mktime(&t);
-	fprintf(stdout, "%s\n", *tzname);
-	fprintf(stdout, "%s\n", getenv("TZ"));
-	fprintf(stdout, "secs: %ld\n", time);
 #endif
+
 	uint64_t bytes_written = 0;
 	do {
 		errno = 0;
@@ -1172,6 +1221,128 @@ int main(int argc, char *argv[])
 			}
 		}
 	} while (bytes_written < len_txt);
+
+#if DEVBUILD
+	sqlite3 *conndb = NULL;
+	char const * const namedb = "whatsapp-chat.db";
+	rc = sqlite3_open(namedb, &conndb);
+	if (SQLITE_OK != rc) {
+		fprintf(stderr, "%s %s\n", "error: failed to open connection to database:", namedb);
+		_exit(1);
+	}
+
+	char transdb[] = (
+		"BEGIN TRANSACTION;\n"
+		"CREATE TABLE IF NOT EXISTS users ("
+		"id INTEGER PRIMARY KEY AUTOINCREMENT,"
+		"name TEXT UNIQUE"
+		");\n"
+		"CREATE TABLE IF NOT EXISTS messages ("
+		"msg_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+		"usr_id INTEGER,"
+		"timestamp DATETIME,"
+		"content TEXT,"
+		"UNIQUE (usr_id, timestamp, content),"
+		"FOREIGN KEY(usr_id) REFERENCES users(id)"
+		");\n"
+	);
+	uint64_t const bytes_transdb = (sizeof(transdb) - 1);
+
+	uint64_t const offset_sqlbase = (offset_mapbase + (timestamps * sizeof(*map)));
+
+	offset = 0;
+	memcpy(dstbuf + offset_sqlbase + offset, transdb, bytes_transdb);
+	offset += bytes_transdb;
+
+	offset_map = 0;
+	for (uint32_t i = 0; i != timestamps; ++i, offset_map += sizeof(*map)) {
+
+		map = (dstbuf + offset_mapbase + offset_map);
+		if (map->size_user) {
+			// NOTE: user names may have spaces so we need to use single quotes
+			char insert[] = "INSERT OR IGNORE INTO users (name) VALUES ('";
+			uint64_t const bytes_insert = (sizeof(insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, insert, bytes_insert);
+			offset += bytes_insert;
+
+			memcpy(dstbuf + offset_sqlbase + offset, dstbuf + map->offset_user, map->size_user);
+			offset += map->size_user;
+
+			char trail_insert[] = "');\n";
+			uint64_t const bytes_trailsert = (sizeof(trail_insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, trail_insert, bytes_trailsert);
+			offset += bytes_trailsert;
+
+			char message_insert[] = (
+				"INSERT OR IGNORE INTO messages (usr_id, timestamp, content) "
+				"VALUES ((SELECT id FROM users WHERE name = '"
+			);
+			uint64_t const bytes_mesert = (sizeof(message_insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, message_insert, bytes_mesert);
+			offset += bytes_mesert;
+
+			memcpy(dstbuf + offset_sqlbase + offset, dstbuf + map->offset_user, map->size_user);
+			offset += map->size_user;
+
+			char content_insert[] = "'),'";
+			uint64_t const bytes_consert = (sizeof(content_insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, content_insert, bytes_consert);
+			offset += bytes_consert;
+
+			memset(mmddyy, 0, sizeof(mmddyy));
+			uint64_t const bytes_timestamp = snprintf((void*) mmddyy, sizeof(mmddyy), "%ld", map->timestamp);
+			if (bytes_timestamp >= sizeof(mmddyy)) {
+				fprintf(stderr, "%s", "error: timestamp truncation\n");
+				sqlite3_close(conndb);
+				_exit(1);
+			}
+
+			memcpy(dstbuf + offset_sqlbase + offset, mmddyy, bytes_timestamp);
+			offset += bytes_timestamp;
+
+			char next_insert[] = "','";
+			uint64_t const bytes_nexsert = (sizeof(next_insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, next_insert, bytes_nexsert);
+			offset += bytes_nexsert;
+
+			memcpy(dstbuf + offset_sqlbase + offset, dstbuf + map->offset_chat, map->size_chat);
+			offset += map->size_chat;
+
+			memcpy(dstbuf + offset_sqlbase + offset, trail_insert, bytes_trailsert);
+			offset += bytes_trailsert;
+
+			if ((len_mmap - (offset_sqlbase + offset)) <= pagesz) {
+				dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
+				len_mmap <<= 1;
+			}
+		}
+	}
+
+	char const commit[] = (
+		"CREATE INDEX IF NOT EXISTS idx_messages_usr ON messages(usr_id);"
+		"COMMIT;"
+	);
+	uint64_t const bytes_commit = (sizeof(commit) - 1);
+	memcpy(dstbuf + offset_sqlbase + offset, commit, bytes_commit);
+	offset += bytes_commit;
+
+	char *errmsg = NULL;
+	rc = sqlite3_exec(conndb, dstbuf + offset_sqlbase, NULL, NULL, &errmsg);
+	if (SQLITE_OK != rc) {
+		fprintf(stderr, "%s", "error: SQL error\n");
+		if (errmsg) {
+			fprintf(stderr, "%s\n", errmsg);
+		}
+		sqlite3_close(conndb);
+		_exit(1);
+	}
+
+	rc = sqlite3_close(conndb);
+	if (SQLITE_OK != rc) {
+		fprintf(stderr, "%s %s\n", "error: failed to close connection to database:", namedb);
+		_exit(1);
+	}
+#endif
 	return 0;
 
 #if DEVBUILD

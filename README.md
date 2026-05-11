@@ -12,13 +12,19 @@ All I am going to say is that if you know the tech you can develop your own tool
 
 ## Compile
 
-This is a zero-dependency util that can be compiled with GCC:
+For production builds we have a zero-dependency util that can be compiled with GCC:
 
 ```sh
 gcc -O2 main.c -o chat-parser.bin
 ```
 
-You may want to experiment with other optimization levels.
+If you are a developer that wants to experiment with this code, you need to define the `DEVBUILD` and link to sqlite:
+
+```sh
+gcc -DDEVBUILD=1 -O2 main.c -o chat-parser.bin -lsqlite3
+```
+
+You may also want to experiment with other optimization levels.
 
 ## Run
 
@@ -53,6 +59,7 @@ The only command-line argument that this tool understand is the help argument:
 
 and this shows the example usage that you see in this section.
 
+
 ## Development Status
 
 This section is devoted to log the development of this application to keep a comprehensive history beyond what one can usually find from git-commit logs. I talk about edge cases, problems and their solutions, design and performance considerations, etc.
@@ -65,7 +72,8 @@ Quick access to the development logs:
 - [Day 4: Exploring Timestamp Encodings](#day-4)
 - [Day 5: Timestamp Spatial Mapping](#day-5)
 - [Day 6: Forging a Unix Filter](#day-6)
-- [Day 7: Fixes](#day-7)
+- [Day 7: Fixes and Spatial Mappings](#day-7)
+- [Day 7: SQL Ingestion](#day-8)
 
 
 ### Day 1
@@ -287,3 +295,23 @@ On this day I put the Unicode to ASCII transliterator to the test by having it p
 
 
 - **Mapped Users and Chats**: The spatial mapping of the Whatsapp chat has been completed. Now we have offsets and lengths for the timestamp, users, and chat messages. If we want to make copies of the data we can do so with `memcpy()` followed by addending the null-character if it turns out that SQLite expects the data in a string for instance.
+
+
+### Day 8
+On this day I was mostly concerned with writing the code to ingest the chats into a SQLite database. Contrary to my original expectations, that this would be easy, it was not that easy after realizing that I had to build the SQL transaction at a lower level than what I thought. Instead of leveraging `fprintf` family of functions to write the SQL transaction I figured that it would be more efficient to work directly with memory by writing the query into the `mmap` that the code already uses. That is, the map used for storing the Unicode to ASCII transliterated chats. Conceptually, it's not difficult to understand that one needs to be careful with pointer arithmetic as writing to the memory region; however, the difficulty stems from the fact that I am not used to working that way ordinarily. Nevertheless, by confronting the challenge I was able to identify other problems in my code that had to be addressed before writing the SQL ingestion code&mdash;working with offsets not with pointers because the `mremap()` can move the base address of the memory map and invalidate every reference. And that's not to be overlooked because the intention is to process large datasets of whatsapp chats.
+
+#### Achievements
+
+- **Solved the Duplicate WhatsApp Timestamps Problem**: Duplicate timestamps in whatsapp happens when you have users in a group chat that post a lot of short messages, and because whatsapp timestamps lack seconds resolution the export ends up with several duplicates. The pragmatic solution that does not involve checking the contents of the message is to just increment the duplicate timestamp by a second. And this just works easily because the code represents time in seconds since the Unix Epoch. If the next timestamp is less than or equal to the latest timestamp it is incremented by a second. And it is easy to validate if the algorithm worked because one ends up with a sequence of timestamps in ascending order. It would be difficult for a user to deliberately write so many messages that this could drift the timestamps of the next messages though that's not impossible for a bot. And the user must be a developer that knows about this tool and also knows that this tool is used in a group chat that they belong to. I am not concerned about this because my use case is private chats, not group chats. I used group chats to stress-test my code. In case someone wants to use this tool they will know of this design decision if they read this.
+
+- **Used Offsets instead of Pointers**: Instead of storing pointers to the user info, the timestamps, and the chat messages, the code stores offsets with respect to the base address. The base address is the memory address returned by `mmap()` and later by `mremap()` when code needs more memory to handle large datasets. It's worth mentioning that `mremap()` is called with the `MREMAP_MAYMOVE` flag enabled and that means that the base address can move elsewhere. If you don't know about [`mremap()`](https://man7.org/linux/man-pages/man2/mremap.2.html) you can think of it as a lightning fast memory reallocator for Linux. This is why it was important to revise the code to use offsets instead of pointers and it took a couple of commits and testing to get it right.
+
+- **Alignment for Performance**: Aligned the `struct mapping` struct to a 64-byte boundary in the memory region for speed access to the data offsets.
+
+- **Extended the Memory Mapping on Demand**: Originally the code only doubled the memory map at the beginning when reading the WhatsApp chats in Unicode format. The destination buffer used the same size and we simply hoped for the best. Of course that had to change because the SQL ingestion requires substantial space as much as the message content space and this meant adding code to resize the memory mapping. It was evident that this was needed, not done for fun, because the code tried to access memory addresses beyond the map length (triggering a sigsegv). After the remapping code was added the code was able to write the SQL transaction into the memory map successfully.
+
+- **Performed the Database Transaction**: It is not only more efficient to batch SQL operations but more robust for implementing business logic and this is why I decided to batch the work in a single transaction. The other reason for doing that is that the SQLite API calls are minimal this way. We only need to open a connection to the database, write the transaction to the memory map, and provide that SQL to the `exec` routine, and finally close the connection to the database. I used defensive programming so even if this tool is run multiple of times to process the same dataset it won't fail. This was implemented by leveraging the unique constraint and the insert or ignore command.
+
+### Future Improvements
+
+As of commit [98ac2f77](https://github.com/misael-diaz/ChatParser/blob/98ac2f77f10cd8a11c84755cfa7f1c3df95e77a4) the code is written into main, there are no function definitions. At this point I have a working code that can be refactored to make it easier to maintain. However, the code does not even reach 1.5K lines (including empty lines) and so it is fairly easy to extend in the current state. Moreover, the code consists of a couple of loops and conditionals and the data flow is quite linear and easy to follow. This is the main reason why I did not invest time on refactoring it, and this goes well with the handmade-hero philosophy. As you are exploring the solution you do not concern yourself with refactoring because that would be counterproductive.
