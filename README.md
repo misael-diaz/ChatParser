@@ -73,7 +73,7 @@ Quick access to the development logs:
 - [Day 5: Timestamp Spatial Mapping](#day-5)
 - [Day 6: Forging a Unix Filter](#day-6)
 - [Day 7: Fixes and Spatial Mappings](#day-7)
-- [Day 7: SQL Ingestion](#day-8)
+- [Day 8: SQL Ingestion](#day-8)
 
 
 ### Day 1
