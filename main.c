@@ -191,6 +191,9 @@ int main(int argc, char *argv[])
 			else if (((*txt) >= 0x0bu) && ((*txt) < 0x20u)) {
 				*dst = 0x20u;
 			}
+			else if (((*txt) == 0x22u) || ((*txt) == 0x27u)) { // NOTE: folds quotes to space for SQL
+				*dst = 0x20u;
+			}
 			else if (((*txt) >= 0x41u) && ((*txt) < 0x5bu)) {
 				*dst = (((*txt) - 0x41u) + 0x61u);
 			}
