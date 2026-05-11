@@ -1238,6 +1238,7 @@ int main(int argc, char *argv[])
 		"usr_id INTEGER,"
 		"timestamp DATETIME,"
 		"content TEXT,"
+		"UNIQUE (usr_id, timestamp, content),"
 		"FOREIGN KEY(usr_id) REFERENCES users(id)"
 		");\n"
 	);
