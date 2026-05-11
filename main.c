@@ -1270,7 +1270,7 @@ int main(int argc, char *argv[])
 			offset += bytes_trailsert;
 
 			char message_insert[] = (
-				"INSERT INTO messages (usr_id, timestamp, content) "
+				"INSERT OR IGNORE INTO messages (usr_id, timestamp, content) "
 				"VALUES ((SELECT id FROM users WHERE name = '"
 			);
 			uint64_t const bytes_mesert = (sizeof(message_insert) - 1);

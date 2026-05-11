@@ -66,6 +66,7 @@ Quick access to the development logs:
 - [Day 5: Timestamp Spatial Mapping](#day-5)
 - [Day 6: Forging a Unix Filter](#day-6)
 - [Day 7: Fixes and Spatial Mappings](#day-7)
+- [Day 7: SQL Ingestion](#day-8)
 
 
 ### Day 1
@@ -287,3 +288,7 @@ On this day I put the Unicode to ASCII transliterator to the test by having it p
 
 
 - **Mapped Users and Chats**: The spatial mapping of the Whatsapp chat has been completed. Now we have offsets and lengths for the timestamp, users, and chat messages. If we want to make copies of the data we can do so with `memcpy()` followed by addending the null-character if it turns out that SQLite expects the data in a string for instance.
+
+
+### Day 8
+On this day I was mostly concerned with writing the code to ingest the chats into SQLite database. Contrary to my original expectations, that this would be easy, it was not that easy to realize because I had to build the SQL transaction at a lower level than what I thought. Instead of leveraging `fprintf` family of functions to write the query I figured that it would be more efficient to work directly with memory by writing the query into the `mmap` that the code already uses to store the Unicode to ASCII transliterated chats. Conceptually, it's not difficult to understand that one needs to be careful with pointer arithmetic. The difficulty rises from not working that way ordinarily. Nevertheless, by confronting the challenge I was able to identify other problems in my code that had to be addressed before writing the SQL ingestion code&mdash;work with offsets not with pointers because the `mremap()` can move the base address of the memory map.
