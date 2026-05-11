@@ -1233,6 +1233,12 @@ int main(int argc, char *argv[])
 		"id INTEGER PRIMARY KEY AUTOINCREMENT,"
 		"name TEXT UNIQUE"
 		");\n"
+		"CREATE TABLE IF NOT EXISTS messages ("
+		"msg_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+		"usr_id INTEGER,"
+		"content TEXT,"
+		"FOREIGN KEY(usr_id) REFERENCES users(id)"
+		");\n"
 	);
 	uint64_t const bytes_transdb = (sizeof(transdb) - 1);
 
@@ -1261,6 +1267,28 @@ int main(int argc, char *argv[])
 			memcpy(dstbuf + offset_sqlbase + offset, trail_insert, bytes_trailsert);
 			offset += bytes_trailsert;
 
+			char message_insert[] = (
+				"INSERT INTO messages (usr_id, content) "
+				"VALUES ((SELECT id FROM users WHERE name = '"
+			);
+			uint64_t const bytes_mesert = (sizeof(message_insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, message_insert, bytes_mesert);
+			offset += bytes_mesert;
+
+			memcpy(dstbuf + offset_sqlbase + offset, dstbuf + map->offset_user, map->size_user);
+			offset += map->size_user;
+
+			char content_insert[] = "'),'";
+			uint64_t const bytes_consert = (sizeof(content_insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, content_insert, bytes_consert);
+			offset += bytes_consert;
+
+			memcpy(dstbuf + offset_sqlbase + offset, dstbuf + map->offset_chat, map->size_chat);
+			offset += map->size_chat;
+
+			memcpy(dstbuf + offset_sqlbase + offset, trail_insert, bytes_trailsert);
+			offset += bytes_trailsert;
+
 			if ((len_mmap - (offset_sqlbase + offset)) <= pagesz) {
 				dstbuf = mremap(dstbuf, len_mmap, (len_mmap << 1), MREMAP_MAYMOVE);
 				len_mmap <<= 1;
@@ -1268,8 +1296,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	char const * const commit = "COMMIT;";
-	uint64_t const bytes_commit = snprintf(NULL, 0, "%s", commit);
+	char const commit[] = "COMMIT;";
+	uint64_t const bytes_commit = (sizeof(commit) - 1);
 	memcpy(dstbuf + offset_sqlbase + offset, commit, bytes_commit);
 	offset += bytes_commit;
 
