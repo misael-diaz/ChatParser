@@ -12,13 +12,19 @@ All I am going to say is that if you know the tech you can develop your own tool
 
 ## Compile
 
-This is a zero-dependency util that can be compiled with GCC:
+For production builds we have a zero-dependency util that can be compiled with GCC:
 
 ```sh
 gcc -O2 main.c -o chat-parser.bin
 ```
 
-You may want to experiment with other optimization levels.
+If you are a developer that wants to experiment with this code, you need to define the `DEVBUILD` and link to sqlite:
+
+```sh
+gcc -DDEVBUILD=1 -O2 main.c -o chat-parser.bin -lsqlite3
+```
+
+You may also want to experiment with other optimization levels.
 
 ## Run
 
@@ -52,6 +58,7 @@ The only command-line argument that this tool understand is the help argument:
 ```
 
 and this shows the example usage that you see in this section.
+
 
 ## Development Status
 
