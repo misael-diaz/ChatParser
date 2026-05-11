@@ -1236,6 +1236,7 @@ int main(int argc, char *argv[])
 		"CREATE TABLE IF NOT EXISTS messages ("
 		"msg_id INTEGER PRIMARY KEY AUTOINCREMENT,"
 		"usr_id INTEGER,"
+		"timestamp DATETIME,"
 		"content TEXT,"
 		"FOREIGN KEY(usr_id) REFERENCES users(id)"
 		");\n"
@@ -1268,7 +1269,7 @@ int main(int argc, char *argv[])
 			offset += bytes_trailsert;
 
 			char message_insert[] = (
-				"INSERT INTO messages (usr_id, content) "
+				"INSERT INTO messages (usr_id, timestamp, content) "
 				"VALUES ((SELECT id FROM users WHERE name = '"
 			);
 			uint64_t const bytes_mesert = (sizeof(message_insert) - 1);
@@ -1282,6 +1283,22 @@ int main(int argc, char *argv[])
 			uint64_t const bytes_consert = (sizeof(content_insert) - 1);
 			memcpy(dstbuf + offset_sqlbase + offset, content_insert, bytes_consert);
 			offset += bytes_consert;
+
+			memset(mmddyy, 0, sizeof(mmddyy));
+			uint64_t const bytes_timestamp = snprintf((void*) mmddyy, sizeof(mmddyy), "%ld", map->timestamp);
+			if (bytes_timestamp >= sizeof(mmddyy)) {
+				fprintf(stderr, "%s", "error: timestamp truncation\n");
+				sqlite3_close(conndb);
+				_exit(1);
+			}
+
+			memcpy(dstbuf + offset_sqlbase + offset, mmddyy, bytes_timestamp);
+			offset += bytes_timestamp;
+
+			char next_insert[] = "','";
+			uint64_t const bytes_nexsert = (sizeof(next_insert) - 1);
+			memcpy(dstbuf + offset_sqlbase + offset, next_insert, bytes_nexsert);
+			offset += bytes_nexsert;
 
 			memcpy(dstbuf + offset_sqlbase + offset, dstbuf + map->offset_chat, map->size_chat);
 			offset += map->size_chat;
