@@ -6,7 +6,9 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#if DEVBUILD
 #include <sqlite3.h>
+#endif
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
@@ -1199,6 +1201,7 @@ int main(int argc, char *argv[])
 		}
 	}
 #endif
+
 	uint64_t bytes_written = 0;
 	do {
 		errno = 0;
@@ -1219,6 +1222,7 @@ int main(int argc, char *argv[])
 		}
 	} while (bytes_written < len_txt);
 
+#if DEVBUILD
 	sqlite3 *conndb = NULL;
 	char const * const namedb = "whatsapp-chat.db";
 	rc = sqlite3_open(namedb, &conndb);
@@ -1338,6 +1342,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%s %s\n", "error: failed to close connection to database:", namedb);
 		_exit(1);
 	}
+#endif
 	return 0;
 
 #if DEVBUILD
