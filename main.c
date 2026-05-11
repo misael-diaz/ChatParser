@@ -1313,7 +1313,10 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	char const commit[] = "COMMIT;";
+	char const commit[] = (
+		"CREATE INDEX IF NOT EXISTS idx_messages_usr ON messages(usr_id);"
+		"COMMIT;"
+	);
 	uint64_t const bytes_commit = (sizeof(commit) - 1);
 	memcpy(dstbuf + offset_sqlbase + offset, commit, bytes_commit);
 	offset += bytes_commit;
