@@ -1,4 +1,13 @@
 #define _GNU_SOURCE
+
+/*
+
+Copyright (c) 2026 Misael Díaz-Maldonado
+This source file is released under the MIT License.
+See LICENSE file in the project root for the full license information.
+
+*/
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
