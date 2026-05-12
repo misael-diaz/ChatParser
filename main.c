@@ -16,7 +16,6 @@
 
 #define BOM_UTF8 0x00bfbbefu
 
-// TODO: add offsets and size for the userid and message data
 struct mapping {
 	uint64_t offset_timestamp;
 	uint64_t size_timestamp;
@@ -331,18 +330,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-//EXPERIMENTAL TIMESTAMP DETECTION CODE
-//
-//- uses simple conditionals to locate timestamps
-//- need to set the struct tm according to the AM and PM cases
-//- for the time being the timestamp is shown on the console for verification
-//- consider checking for the hyphen `-` as well
-//- consider checking for the newline character preceeding the timestamp or the first-character in the buffer
-//- consider using a regex in the future to account for the presence of the username followed by a colon `:`
-//  to make it less likely to confuse the timestamp with the chat text
-//- of course there's a certain degree of repetition that could be taken into account for refactoring but
-//  right now this is exploratory code and I am fine with repetition
-
 	dst = dstbuf;
 	setenv("TZ", "EST-5:00:00", 1); // sets the timezone for the timestamp data in the chat
 	int64_t sec = 0;
@@ -359,7 +346,6 @@ int main(int argc, char *argv[])
 	uint64_t const offset_mapbase = ((len_txt + 0x3fu) & ~0x3fu);
 	uint64_t offset_map = 0;
 	uint32_t lineno = 0;
-	uint32_t sz_timestamp = 0;
 	void *vptr = NULL;
 	char *endptr = NULL;
 	char *nl = NULL;
@@ -540,24 +526,6 @@ int main(int argc, char *argv[])
 						}
 					}
 				}
-
-				uint16_t const AntePostMeridiemValue = ((dst[offset + 13] << 8) | dst[offset + 12]);
-				if (
-					(0x6d61u == AntePostMeridiemValue) ||
-					(0x6d70u == AntePostMeridiemValue)
-				   )
-				{
-				    sz_timestamp = 14;
-				    memcpy(mmddyy, dst, sz_timestamp);
-				    mmddyy[sz_timestamp] = 0;
-				}
-				else {
-				    sz_timestamp = 15;
-				    memcpy(mmddyy, dst, sz_timestamp);
-				    mmddyy[sz_timestamp] = 0;
-				}
-				//fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
-				memset(mmddyy, 0, sizeof(mmddyy));
 			    }
 			}
 			else if ((dst[offset + 3] >= 0x30u) && (dst[offset + 3] < 0x3au)) {
@@ -726,23 +694,6 @@ int main(int argc, char *argv[])
 						    }
 					    }
 				    }
-
-				    uint16_t const AntePostMeridiemValue = ((dst[offset + 14] << 8) | dst[offset + 13]);
-				    if (
-					    (0x6d61u == AntePostMeridiemValue) ||
-					    (0x6d70u == AntePostMeridiemValue)
-				       ) {
-					sz_timestamp = 15;
-					memcpy(mmddyy, dst, sz_timestamp);
-					mmddyy[sz_timestamp] = 0;
-				    }
-				    else {
-					sz_timestamp = 16;
-					memcpy(mmddyy, dst, sz_timestamp);
-					mmddyy[sz_timestamp] = 0;
-				    }
-				    //fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
-				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
 			}
@@ -917,23 +868,6 @@ int main(int argc, char *argv[])
 						    }
 					    }
 				    }
-
-				    uint16_t const AntePostMeridiemValue = ((dst[offset + 14] << 8) | dst[offset + 13]);
-				    if (
-					    (0x6d61u == AntePostMeridiemValue) ||
-					    (0x6d70u == AntePostMeridiemValue)
-				       ) {
-					sz_timestamp = 15;
-					memcpy(mmddyy, dst, sz_timestamp);
-					mmddyy[sz_timestamp] = 0;
-				    }
-				    else {
-					sz_timestamp = 16;
-					memcpy(mmddyy, dst, sz_timestamp);
-					mmddyy[sz_timestamp] = 0;
-				    }
-				    //fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
-				    memset(mmddyy, 0, sizeof(mmddyy));
 				}
 			    }
 			    else if ((dst[offset + 4] >= 0x30u) && (dst[offset + 4] < 0x3au)) {
@@ -1102,23 +1036,6 @@ int main(int argc, char *argv[])
 							}
 						}
 					}
-
-					uint16_t const AntePostMeridiemValue = ((dst[offset + 15] << 8) | dst[offset + 14]);
-					if (
-						(0x6d61u == AntePostMeridiemValue) ||
-						(0x6d70u == AntePostMeridiemValue)
-					   ) {
-					    sz_timestamp = 16;
-					    memcpy(mmddyy, dst, sz_timestamp);
-					    mmddyy[sz_timestamp] = 0;
-					}
-					else {
-					    sz_timestamp = 17;
-					    memcpy(mmddyy, dst, sz_timestamp);
-					    mmddyy[sz_timestamp] = 0;
-					}
-					//fprintf(stdout, "timestamp: %s mm/dd/yy, hh:mm %ld/%ld/%ld, %.2ld:%.2ld encoding: %ld\n", mmddyy, mon, mday, year, hour, tmin, encoded_time);
-					memset(mmddyy, 0, sizeof(mmddyy));
 				    }
 				}
 			    }
@@ -1134,7 +1051,6 @@ int main(int argc, char *argv[])
 	prev_timestamp = 0;
 	offset_map = 0;
 	char unsigned user[32];
-	char unsigned chat[64];
 	for (uint32_t i = 0; i != timestamps; ++i, offset_map += sizeof(*map)) {
 		void * const vmap = (dstbuf + (offset_mapbase + offset_map));
 		struct mapping * const map = vmap;
@@ -1186,15 +1102,6 @@ int main(int argc, char *argv[])
 			}
 			map->offset_chat = (vend - dstbuf);
 			map->size_chat = (vnxt - vend);
-			uint64_t const size = ((map->size_chat < sizeof(chat))
-					? map->size_chat
-					: sizeof(chat)
-			);
-			memset(chat, 0, sizeof(chat));
-			memcpy(chat, dstbuf + map->offset_chat, size);
-			chat[size - 1] = 0;
-			uint64_t const timestamp = map->timestamp;
-			//fprintf(stdout, "%s :: %lu ::  %s :: %s\n", mmddyy, timestamp, user, chat);
 		}
 		else {
 			fprintf(stdout, "%s", "would overrun timestamp placeholder\n");
