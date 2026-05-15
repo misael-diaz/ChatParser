@@ -35,8 +35,64 @@ struct mapping {
 	uint64_t timestamp;
 	uint64_t _padding;
 };
-
 _Static_assert(64 == sizeof(struct mapping));
+
+struct lump {
+	uint64_t offset;
+	uint64_t size;
+};
+_Static_assert(16 == sizeof(struct lump));
+
+struct header {
+	uint64_t lumps;
+	uint64_t size;
+};
+_Static_assert(16 == sizeof(struct header));
+
+int callback(
+		void *base,
+		int numcols,
+		char **datacol,
+		char **namecol
+) {
+	struct header *header = base;
+	struct lump lump = {};
+	struct lump *lmp = &lump;
+	if (0 > numcols) {
+		return -1;
+	}
+	uint64_t const curlumpno = (header->lumps)? (header->lumps - 1) : 0;
+	uint64_t const lumps = numcols;
+
+	struct lump const * const curlump = base + sizeof(*header) + (curlumpno * sizeof(*lmp));
+	// NOTE: we exepect the memory region pointed to by the base address to be zero initialized and that is why we don't bother checking if there's lump data when we execute the callback the first timed since we know that the `offset` is going to be zero.
+	uint64_t const curoffset = curlump->offset + curlump->size;
+	void *result = ((header->lumps)
+			? base + sizeof(*header) + (header->lumps * sizeof(*lmp))
+			: base + sizeof(*header)
+	);
+	void *data = base + header->size + curoffset;
+	uint64_t offset = curoffset;
+	uint64_t lumpno = (header->lumps)? header->lumps : 0;
+	for (int i = 0; i != numcols; ++i, result += sizeof(*lmp), ++lumpno) {
+		struct lump *lmp = result;
+		if ((NULL == datacol) || (NULL == datacol[i])) {
+			lmp->size = 0;
+			lmp->offset = 0;
+		}
+		else {
+			uint64_t const size = (1 + strlen(datacol[i]));
+			lmp->size = size;
+			lmp->offset = offset;
+			memcpy(data, datacol[i], lmp->size);
+			data += lmp->size;
+			offset += size;
+		}
+	}
+
+	header->lumps += lumps;
+	return 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -1252,6 +1308,60 @@ int main(int argc, char *argv[])
 		sqlite3_close(conndb);
 		_exit(1);
 	}
+
+#if DEVSQL
+
+	// NOTES:
+	// Inspired on idSoftware PAK files, we have a header that tells how many lumps
+	// are there. Each lump stores an offset and a size to the data returned by
+	// the database. The stored offsets are with respect to the end of the header +
+	// lumps. For convenience that is stored in header.size. So to access whatever
+	// data you would use the following:
+	//
+	//
+	// dstbuf + offset_sqlbase + offset + lump[i].offset
+	//
+	//
+	// the lumps are stored just past the heades, the address of the first lump:
+	//
+	//
+	// dstbuf + offset_sqlbase + offset + sizeof(*header)
+	//
+	//
+	// TODO:
+	// * this is still rudimentary because we have to be careful in the sense that
+	//   one has to bear in mind the number of columns and rows, for the total
+	//   number of lumps is the product of those. Meaning that it is really easy
+	//   to mess up.
+	//
+	// * we should add padding just to ensure 64*byte alignment at least for the
+	//   lumps. There's not much we can do when the result is text of whatever
+	//   length unless we enforce a rigid schema on SQLite (not without incurring
+	//   on more storage requirements at the database level).
+	//
+	// * we could also make it so that the query is part of the mmap as we did above.
+	uint64_t const limit = 8;
+	uint64_t const cols = 2;
+	uint64_t const lumps = (cols * limit);
+	char sql[] = (
+		"SELECT id, name FROM users LIMIT 8;"
+	);
+
+	struct lump lump = {};
+	struct lump *lmp = &lump;
+	struct header *header = dstbuf + offset_sqlbase + offset;
+	header->lumps = 0;
+	header->size = sizeof(*header) + (lumps * sizeof(*lmp));
+	rc = sqlite3_exec(conndb, sql, callback, dstbuf + offset_sqlbase + offset, &errmsg);
+	if (SQLITE_OK != rc) {
+		fprintf(stderr, "%s", "error: SQL error\n");
+		if (errmsg) {
+			fprintf(stderr, "%s\n", errmsg);
+		}
+		sqlite3_close(conndb);
+		_exit(1);
+	}
+#endif
 
 	rc = sqlite3_close(conndb);
 	if (SQLITE_OK != rc) {
